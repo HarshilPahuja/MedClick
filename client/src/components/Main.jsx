@@ -5,15 +5,12 @@ import AddIcon from '@mui/icons-material/Add';
 export default function Main(){
 
     function remove(dawaikanaam){
-
      pushmeds(meds.filter((name)=>{
         return name!=dawaikanaam;
      }));
     }
 
     function addmedicine(event){
-
-        
     event.preventDefault();
     if(inputmed.trim()==""){//prevents empty to be pushed into the array
         alert("add some medicine, we know you need em amigo!");
