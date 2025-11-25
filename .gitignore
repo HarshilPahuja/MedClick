@@ -1,0 +1,45 @@
+# -------------------------
+# Node & Express
+# -------------------------
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+package-lock.json
+.env
+.env.local
+.env.*.local
+
+# Supabase
+.supabase/
+supabase/.temp/
+supabase/functions/**/node_modules/
+supabase/functions/**/dist/
+
+# Build / Output
+dist/
+build/
+tmp/
+temp/
+.cache/
+.vercel/
+.netlify/
+
+# Logs
+logs/
+*.log
+*.out
+*.pid
+
+# OS Files
+.DS_Store
+Thumbs.db
+
+# IDE / Editor
+.vscode/
+.idea/
+*.swp
+
+# Misc
+*.tsbuildinfo
