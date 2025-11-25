@@ -12,7 +12,8 @@ export default function Main(){
     }
 
     function addmedicine(event){
-    
+
+        
     event.preventDefault();
     if(inputmed.trim()==""){//prevents empty to be pushed into the array
         alert("add some medicine, we know you need em amigo!");
@@ -45,8 +46,6 @@ export default function Main(){
             {meds.map((med,index)=>{
                return( <Card name={med} key={index} removemed={remove}/>); //each card has a key - index. find that index who clicked it. remove it 
             })}
-
-
         </>
     );
 }
