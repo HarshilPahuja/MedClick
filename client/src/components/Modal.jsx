@@ -3,32 +3,17 @@ import { useState } from "react";
 
 export default function Modal(props){
 
-const [ onexstate , set1xstate]=useState(false)
-const [ twoxstate , set2xstate]=useState(false)
-const [ threexstate , set3xstate]=useState(false)
-
+const [buttonarray, setbuttonarray]=useState([false,false,false]);
 
 
 function finalsubmit(){
     props.closemodalfromchild();
 }
 
-function click1x(){
-    set1xstate(true);
-    set2xstate(false);
-    set3xstate(false);
-}
-
-function click2x(){
-    set2xstate(true);
-    set1xstate(false);
-    set3xstate(false);
-}
-
-function click3x(){
-    set3xstate(true);
-    set1xstate(false);
-    set2xstate(false);
+function handleRecurrence(index) {
+    const arr = [false, false, false];
+    arr[index] = true;                 
+    setbuttonarray(arr);            
 }
 
 return( 
@@ -42,15 +27,15 @@ return(
         <input type="text" placeholder="Dosage" id="dosage"/>
         <input type="text" placeholder="Instructions" name="instructions"/>
         <div className="flex gap-2 reccurence">
-            <button type="button" onClick={click1x} className="hover:border-2" >1x</button>
-            <button type="button" onClick={click2x} className="hover:border-2" >2x</button>
-            <button type="button" onClick={click3x} className="hover:border-2" >3x</button>
+           <button type="button"  className="hover:border-2" onClick={() => handleRecurrence(0)}>1x</button>
+            <button type="button" className="hover:border-2" onClick={() => handleRecurrence(1)}>2x</button>
+            <button type="button" className="hover:border-2" onClick={() => handleRecurrence(2)}>3x</button>
             <button type="button" className="hover:border-2">custom</button>  
         </div>
 
-        {onexstate? <div> <input type="time" id="time" name="time"/> </div>:null }
-        {twoxstate? <div> <input type="time" id="time" name="time"/> <input type="time" id="time" name="time"/> </div>:null }
-        {threexstate? <div> <input type="time" id="time" name="time"/> <input type="time" id="time" name="time"/> <input type="time" id="time" name="time"/> </div>:null }
+        {buttonarray[0]? <div> <input type="time" id="time" name="time"/> </div>:null }
+        {buttonarray[1]? <div> <input type="time" id="time" name="time"/> <input type="time" id="time" name="time"/> </div>:null }
+        {buttonarray[2]? <div> <input type="time" id="time" name="time"/> <input type="time" id="time" name="time"/> <input type="time" id="time" name="time"/> </div>:null }
          
         <button type="submit"> save </button>
 
