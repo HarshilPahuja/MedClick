@@ -3,7 +3,21 @@ import Modal from "./Modal.jsx";
 import {useState } from 'react';
 import AddIcon from '@mui/icons-material/Add';
 
+//{
+// name:
+// dosage:
+// instruction:
+// timers per day:
+// time:
+// recurrence:
+// }
+
 export default function Main(){
+
+    const [meds, pushmeds]=useState([]);   //array of objects
+    const [inputmed, changeinput] =useState('');
+    const [showmodal,togglemodal]=useState(false);
+    const [currentmed,setcurrentmed]=useState("");
 
     function remove(dawaikanaam){
      pushmeds(meds.filter((name)=>{
@@ -12,10 +26,10 @@ export default function Main(){
     }
 
 
-    function closemodal(){
-
+    function closemodal(filledmed){
+        // alert(filledmed.final_dosage); //test1
         togglemodal(false);
-        pushmeds([...meds,inputmed]); //not pushing currently
+        pushmeds([...meds,inputmed]); //need to push the object. currentlyl pushing the wrong thing, then line 72 will need to fix
         changeinput("");
 
     }
@@ -38,20 +52,7 @@ export default function Main(){
 
 
 
-    const [meds, pushmeds]=useState([]); //{
-// name:
-// dosage:
-// instruction:
-// timers per day:
-// time:
-// recurrence:
-// iscompleted:false
-// }
-
-
-    const [inputmed, changeinput] =useState('');
-    const [showmodal,togglemodal]=useState(false);
-    const [currentmed,setcurrentmed]=useState("");
+   
 
     return(
         <>
