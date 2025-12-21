@@ -8,6 +8,14 @@ import { useState } from "react";
 // recurrence:
 // }
 
+// const finalobject={
+//     final_name:props.medname,
+//     final_dosage:dosage,
+//     final_instruction:instructions,
+//     final_timesperday:times_per_day_button_array,
+//     final_times:time,
+//     final_days:selected_days,
+//     }
 export default function Modal(props){
 
 

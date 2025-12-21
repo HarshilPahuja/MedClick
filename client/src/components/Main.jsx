@@ -7,10 +7,19 @@ import AddIcon from '@mui/icons-material/Add';
 // name:
 // dosage:
 // instruction:
-// timers per day:
-// time:
+// timers per day: //custom left.
+// time: 
 // recurrence:
 // }
+
+// const finalobject={
+//     final_name:props.medname,
+//     final_dosage:dosage,
+//     final_instruction:instructions,
+//     final_timesperday:times_per_day_button_array,
+//     final_times:time,
+//     final_days:selected_days,
+//     }
 
 export default function Main(){
 
@@ -27,7 +36,16 @@ export default function Main(){
 
 
     function closemodal(filledmed){
-        // alert(filledmed.final_dosage); //test1
+//         alert(
+//   `Name: ${filledmed.final_name}
+// Dosage: ${filledmed.final_dosage}
+// Instruction: ${filledmed.final_instruction}
+// Times/Day: ${filledmed.final_timesperday}
+// Times: ${filledmed.final_times}
+// Day: ${filledmed.final_days}`
+// ); //test
+ 
+
         togglemodal(false);
         pushmeds([...meds,inputmed]); //need to push the object. currentlyl pushing the wrong thing, then line 72 will need to fix
         changeinput("");
