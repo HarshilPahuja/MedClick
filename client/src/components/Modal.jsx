@@ -56,6 +56,9 @@ function handle_reccurence_array(index){
     if(index==0){
     set_selected_days(days.map(()=> true));
     }
+    else{
+        set_selected_days(days.map(()=> false))
+    }
    
     const arr=[false,false,false];
     arr[index]=true;
