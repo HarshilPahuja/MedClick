@@ -68,10 +68,6 @@ export default function Main(){
     }
         
 
-
-
-   
-
     return(
         <>
                 <form onSubmit={addmedicine}>
