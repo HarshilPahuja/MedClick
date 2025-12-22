@@ -1,16 +1,18 @@
 import './App.css'
-import Navbar from './components/Navbar';
-import Hero from './components/Hero';
-import Main from './components/Main';
+
+import { BrowserRouter, Routes, Route } from "react-router"
+import Home from './components/Home';
+import Login from './components/Login';
+
 export default function App(){
 return(
 <>
-    
-    <Navbar/>
-    <div className='h-[calc(100vh-14vh)] bg-[#f9fbfc]'>
-    <Hero/>
-    <Main/>
-    </div>
+<BrowserRouter>
+      <Routes>
+        <Route path="/" element={<Login />} />
+         <Route path="/home" element={<Home />} />
+      </Routes>
+ </BrowserRouter>
 </>  
 );
 
