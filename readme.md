@@ -1,5 +1,8 @@
-if you forget to eat your meds on time, you can use this <br>
-FCM firebase integration for notification system.<br>
-yet to host it, wait for exams to get over🙏
+if someone forgets to eat their meds they can use this.
 
+bcrypt +Oauth authentication.(very secure)
+FCM firebase intergration for messaging.
+
+
+will host it soon for everyone to use.
 
