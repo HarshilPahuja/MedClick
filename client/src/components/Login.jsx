@@ -36,9 +36,13 @@ export default function Login() {
         const res = await axios.post("http://localhost:3000/login", {  
           sending_email: email, 
           sending_password: password,
+        },
+        {
+          withCredentials: true  //for cookies and sessions
         });
         if (res.data === true) {
-          setAuth({token:true});
+          setAuth({ token: true, loading: false });
+
           navigate("/home");
         }
         else {
@@ -68,6 +72,7 @@ export default function Login() {
               type="email"
               placeholder="Email"
               value={email}
+              name="username"
               onChange={(e) => {
                 set_email(e.target.value);
               }}
@@ -77,6 +82,7 @@ export default function Login() {
             <input
               type="password"
               placeholder="Password"
+              name="password"
               value={password}
               onChange={(e) => {
                 set_password(e.target.value);

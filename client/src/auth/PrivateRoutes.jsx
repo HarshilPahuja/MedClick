@@ -1,10 +1,19 @@
-import { Navigate, Outlet } from 'react-router-dom'
-import { useAuth } from "./AuthProvider";
+import { Navigate, Outlet } from "react-router-dom";
+import { useAuth } from "../auth/AuthProvider";
 
-export default function PrivateRoutes(){
+export default function PrivateRoutes() {
+  const { auth } = useAuth();
 
-    const { auth } = useAuth();
-    return (
-    auth.token ? <Outlet/> : <Navigate to='/'/>
-  )
+  // ⏳ wait until auth state is known
+  if (auth.loading) {
+    return <div>Loading...</div>; // or spinner
+  }
+
+  // ❌ not authenticated
+  if (!auth.token) {
+    return <Navigate to="/" replace />;
+  }
+
+  // ✅ authenticated → render nested routes
+  return <Outlet />;
 }
