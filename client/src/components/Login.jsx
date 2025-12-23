@@ -1,9 +1,13 @@
 import Spline from "@splinetool/react-spline";
 import GoogleIcon from "@mui/icons-material/Google";
+import { useAuth } from "../auth/AuthProvider";
+import { useNavigate } from "react-router-dom";
 import { useState } from "react";
 import axios from "axios";
 
 export default function Login() {
+  const { setAuth } = useAuth();
+  const navigate = useNavigate();
   const [email, set_email] = useState("");
   const [password, set_password] = useState("");
 
@@ -29,11 +33,19 @@ export default function Login() {
       alert("Invalid Password.");
     } else {
       try {
-        const res = await axios.post("http://localhost:3000/login", {  //this res gets true false // now needs to set the privateroute auth token to true/false
-          sending_email: email, //then left signup->screen now u can login etc. UX things //then sessions cookies // then database medicine thing //then firebase
+        const res = await axios.post("http://localhost:3000/login", {  
+          sending_email: email, 
           sending_password: password,
         });
-         console.log("AUTH RESULT:", res.data) //remove later
+        if (res.data === true) {
+          setAuth({token:true});
+          navigate("/home");
+        }
+        else {
+        alert("Invalid credentials");
+      }
+
+         
       } catch (err) {
         console.error(err.response?.data || err.message);
       }
