@@ -3,42 +3,42 @@ import GoogleIcon from "@mui/icons-material/Google";
 import { useState } from "react";
 import axios from "axios";
 
-
-
 export default function Login() {
   const [email, set_email] = useState("");
   const [password, set_password] = useState("");
 
-
   async function signup(e) {
     e.preventDefault();
-
+    //left form validation techniques
     try {
       const res = await axios.post("http://localhost:3000/signin", {
         sending_email: email,
         sending_password: password,
       });
-
-      console.log(res.data); //final remove
     } catch (err) {
       console.error(err.response?.data || err.message);
     }
   }
 
-  //   function loginform(e){
-  //     e.preventDefault();
-  //     if(email.length===0){
-  //         set_email("");
-  //     }
-  //     else if(password.length===0){
-  //         set_password("");
-  //         alert("Invalid Password.");
-  //     }
-  //     else{
-
-  //     }
-
-  //   }
+  async function loginform() {
+    if (email.length === 0) {
+      set_email("");
+      alert("Invalid email.");
+    } else if (password.length === 0) {
+      set_password("");
+      alert("Invalid Password.");
+    } else {
+      try {
+        const res = await axios.post("http://localhost:3000/login", {  //this res gets true false // now needs to set the privateroute auth token to true/false
+          sending_email: email, //then left signup->screen now u can login etc. UX things //then sessions cookies // then database medicine thing //then firebase
+          sending_password: password,
+        });
+         console.log("AUTH RESULT:", res.data) //remove later
+      } catch (err) {
+        console.error(err.response?.data || err.message);
+      }
+    }
+  }
 
   return (
     <div className="min-h-screen w-full flex bg-black text-white">
@@ -75,7 +75,8 @@ export default function Login() {
             <div className="flex flex-col gap-4">
               {/* Primary */}
               <button
-                type="submit"
+                type="button"
+                onClick={loginform}
                 className="w-full py-3 bg-blue-600 rounded-md hover:bg-blue-700 transition font-medium"
               >
                 Login

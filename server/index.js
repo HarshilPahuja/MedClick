@@ -4,7 +4,6 @@ import "dotenv/config";
 import bodyParser from "body-parser";
 import { createClient } from "@supabase/supabase-js";
 import cors from "cors";
- 
 
 const supabase = createClient(
   process.env.SUPABASE_URL,
@@ -16,14 +15,14 @@ const port = process.env.PORT || 3000;
 const saltRounds = 10;
 
 app.use(bodyParser.urlencoded({ extended: true }));
- app.use(
+app.use(
   cors({
     origin: "http://localhost:5173",
     methods: ["GET", "POST"],
-    credentials: true
+    credentials: true,
   })
 );
-  app.use(express.json());
+app.use(express.json());
 
 app.post("/signin", async (req, res) => {
   bcrypt.hash(
@@ -43,10 +42,28 @@ app.post("/signin", async (req, res) => {
       if (error) {
         console.error(error);
       } else {
-        console.log("User inserted successfully");  //final remove
+        console.log("User inserted successfully"); // remove later
       }
     }
   );
+});
+
+app.post("/login", async (req, res) => {
+  const received_email = req.body.sending_email;
+  const received_password = req.body.sending_password;
+
+  const { data, error } = await supabase
+    .from("authentication")
+    .select("password")
+    .eq("email", received_email);
+
+  if (error || data.length === 0) {
+    return res.json(false);
+  }
+
+  const isMatch = await bcrypt.compare(received_password, data[0].password);
+
+  return res.json(isMatch);
 });
 
 app.listen(port, () => {
