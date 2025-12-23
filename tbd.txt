@@ -2,3 +2,4 @@
 //then sessions cookies 
 // then database medicine thing 
 //then firebase
+//UX UX UX
