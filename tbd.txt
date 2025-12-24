@@ -1,4 +1,4 @@
-//UX things (form validations) //UX UX UX
+
 // then database medicine thing 
 //then firebase
 //oauth
