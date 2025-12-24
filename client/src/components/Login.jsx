@@ -123,7 +123,7 @@ export default function Login() {
             )}
 
             {wrong_password && (
-              <h1 className="text-red-500 mb-5">Wrong Password.</h1>
+              <h1 className="text-red-500 mb-5">Incorrect Email or Password.</h1>
             )}
             {/* Buttons */}
             <div className="flex flex-col gap-4">

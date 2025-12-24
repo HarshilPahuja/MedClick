@@ -1,4 +1,4 @@
-//then left signup->screen now u can login etc. UX things (form validations) //UX UX UX
+//UX things (form validations) //UX UX UX
 // then database medicine thing 
 //then firebase
 //oauth
