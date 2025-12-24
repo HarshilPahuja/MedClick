@@ -17,15 +17,16 @@ const app = express();
 const port = process.env.PORT || 3000;
 const saltRounds = 10;
 
-app.use(session({
-  secret:process.env.SECRET_SESSION_KEY,
-  resave:false,
-  saveUninitialized:false,
-  cookie:{
-    maxAge:1000*60*60*24*30
-  }
-
-}))
+app.use(
+  session({
+    secret: process.env.SECRET_SESSION_KEY,
+    resave: false,
+    saveUninitialized: false,
+    cookie: {
+      maxAge: 1000 * 60 * 60 * 24 * 30,
+    },
+  })
+);
 
 app.use(passport.initialize());
 app.use(passport.session());
@@ -47,74 +48,85 @@ app.get("/me", (req, res) => {
   res.json({ authenticated: false });
 });
 
-
 app.post("/signin", async (req, res) => {
-  bcrypt.hash(
-    req.body.sending_password,
-    saltRounds,
-    async (err, encrypted_password) => {
-      if (err) {
-        console.log(err);
+  try {
+    bcrypt.hash(
+      req.body.sending_password,
+      saltRounds,
+      async (err, encrypted_password) => {
+        if (err) {
+          console.log(err);
+          return res.status(500).json({ success: false });
+        }
+        const { data, error } = await supabase
+          .from("authentication")
+          .insert([
+            {
+              email: req.body.sending_email,
+              password: encrypted_password,
+            },
+          ])
+          .select("email, password")
+          .single();
+
+        if (error) {
+          return res.status(400).json({ success: false, error: error.message });
+        } else {
+          return res.status(200).json({ success: true });
+        }
       }
-      const { error } = await supabase.from("authentication").insert([
-        {
-          email: req.body.sending_email,
-          password: encrypted_password,
-        },
-      ]);
-
-      if (error) {
-        console.error(error);
-      } 
-    }
-  );
+    );
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ success: false });
+  }
 });
 
-app.post("/login",passport.authenticate("local"), async (req, res) => {
-    return res.json(true);
+app.post("/login", passport.authenticate("local"), async (req, res) => {
+  return res.json(true);
 });
 
-passport.use(new Strategy({
+passport.use(
+  new Strategy(
+    {
       usernameField: "sending_email",
       passwordField: "sending_password",
     },
-    async function verify(username,password,cb){
-  
-   try {
-      const { data, error } = await supabase
-        .from("authentication")
-        .select("*")
-        .eq("email", username);
+    async function verify(username, password, cb) {
+      try {
+        const { data, error } = await supabase
+          .from("authentication")
+          .select("*")
+          .eq("email", username);
 
-      if (error || !data || data.length === 0) {
-        return cb(null, false); // user not found
+        if (error || !data || data.length === 0) {
+          return cb(null, false); // user not found
+        }
+
+        const user = data[0];
+
+        const isMatch = await bcrypt.compare(password, user.password);
+
+        if (!isMatch) {
+          return cb(null, false);
+        }
+
+        delete user.password; //good practice so it doesnt go beyond, once we do it the next step when we return, password doesnt go.
+        return cb(null, user);
+      } catch (err) {
+        return cb(err);
       }
-
-      const user = data[0];
-
-      const isMatch = await bcrypt.compare(password, user.password);
-
-      if (!isMatch) {
-        return cb(null, false);
-      }
-
-      delete user.password;  //good practice so it doesnt go beyond, once we do it the next step when we return, password doesnt go.
-      return cb(null, user);
-
-    } catch (err) {
-      return cb(err);
     }
+  )
+);
 
+passport.serializeUser((user, cb) => {
+  cb(null, user);
+});
 
-}))
-
-passport.serializeUser((user,cb)=>{
-  cb(null,user);
-})
-
-passport.deserializeUser((user,cb)=>{
-  cb(null,user);
-})
+passport.deserializeUser((user, cb) => {
+  cb(null, user);
+});
 
 app.listen(port, () => {
   console.log(`app listening on port ${port}`);

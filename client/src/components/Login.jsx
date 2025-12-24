@@ -10,19 +10,38 @@ export default function Login() {
   const navigate = useNavigate();
   const [email, set_email] = useState("");
   const [password, set_password] = useState("");
+  
+  const [password_error, set_password_error]=useState(false);
+  const [invalid_email_pass,set_invalid_email_pass]=useState(false);
 
   async function signup(e) {
     e.preventDefault();
-    //left form validation techniques
+    if(password.length===0 || email.length===0){
+      set_invalid_email_pass(true);
+      setTimeout(()=>{
+        set_invalid_email_pass(false);
+      },800);
+    }
+    else if(password.length<8){
+      set_password_error(true);
+      setTimeout(()=>{set_password_error(false)}, 800);
+    }
+    else{
     try {
       const res = await axios.post("http://localhost:3000/signin", {
         sending_email: email,
         sending_password: password,
       });
+      if(res.data.success){
+        setAuth({ token: true, loading: false });
+        navigate("/home");
+      }
     } catch (err) {
       console.error(err.response?.data || err.message);
     }
+    
   }
+}
 
   async function loginform() {
     if (email.length === 0) {
@@ -89,9 +108,15 @@ export default function Login() {
               }}
               className="w-full mb-6 px-4 py-3 rounded-md bg-black/40 border border-white/10 focus:outline-none focus:border-blue-500"
             />
+            {password_error && (
+              <h1 className="text-red-500 mb-1">Too short password!</h1>
+            )}         
+            {invalid_email_pass && (
+              <h1 className="text-red-500 mb-5">Invalid email or password</h1> )}  
             {/* Buttons */}
             <div className="flex flex-col gap-4">
               {/* Primary */}
+              
               <button
                 type="button"
                 onClick={loginform}
@@ -101,6 +126,7 @@ export default function Login() {
               </button>
 
               {/* Secondary actions */}
+              <h1>Don’t have an account yet?</h1>
               <div className="flex gap-3">
                 <button
                   type="submit"
