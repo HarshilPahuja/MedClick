@@ -71,7 +71,7 @@ app.post("/signin", async (req, res) => {
 
         if (error) {
           return res.status(400).json({ success: false, error: error.message });
-        } req.login(data, (err) => { //for signin session cookies
+        } req.login(data, (err) => { //for signin session cookies // req.login() is the core Passport function that creates a session. passport.authenticate("local") just calls req.login() for you after verification. authenticate("local") verifies if correct user if valid calls req.login
           if (err) {
             return res.status(500).json({ success: false });
           }
