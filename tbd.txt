@@ -2,3 +2,14 @@
 // then database medicine thing 
 //then firebase
 //oauth
+
+
+UX
+//sign in while its signing in-loading screen.
+//sign in failed.-screen message.
+//sign in- email already exists
+
+//login loading screen while loggin gin.
+
+
+//logout-delete session

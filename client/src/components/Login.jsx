@@ -10,68 +10,74 @@ export default function Login() {
   const navigate = useNavigate();
   const [email, set_email] = useState("");
   const [password, set_password] = useState("");
-  
-  const [password_error, set_password_error]=useState(false);
-  const [invalid_email_pass,set_invalid_email_pass]=useState(false);
+
+  const [password_error, set_password_error] = useState(false);
+  const [invalid_email_pass, set_invalid_email_pass] = useState(false);
+  const [wrong_password, set_wrong_password] = useState(false);
 
   async function signup(e) {
     e.preventDefault();
-    if(password.length===0 || email.length===0){
+    if (password.length === 0 || email.length === 0) {
       set_invalid_email_pass(true);
-      setTimeout(()=>{
+      setTimeout(() => {
         set_invalid_email_pass(false);
-      },800);
-    }
-    else if(password.length<8){
+      }, 800);
+    } else if (password.length < 8) {
       set_password_error(true);
-      setTimeout(()=>{set_password_error(false)}, 800);
-    }
-    else{
-    try {
-      const res = await axios.post("http://localhost:3000/signin", {
-        sending_email: email,
-        sending_password: password,
-      },
-      { withCredentials: true });
-      if(res.data.success){
-        setAuth({ token: true, loading: false });
-        navigate("/home");
-      }
-    } catch (err) {
-      console.error(err.response?.data || err.message);
-    }
-    
-  }
-}
-
-  async function loginform() {
-    if (email.length === 0) {
-      set_email("");
-      alert("Invalid email.");
-    } else if (password.length === 0) {
-      set_password("");
-      alert("Invalid Password.");
+      setTimeout(() => {
+        set_password_error(false);
+      }, 800);
     } else {
       try {
-        const res = await axios.post("http://localhost:3000/login", {  
-          sending_email: email, 
-          sending_password: password,
-        },
-        {
-          withCredentials: true  //for cookies and sessions across origins
-        });
+        const res = await axios.post(
+          "http://localhost:3000/signin",
+          {
+            sending_email: email,
+            sending_password: password,
+          },
+          { withCredentials: true }
+        );
+        if (res.data.success) {
+          setAuth({ token: true, loading: false });
+          navigate("/home");
+        }
+      } catch (err) {
+        console.error(err.response?.data || err.message);
+      }
+    }
+  }
+
+  async function loginform() {
+    if (email.length === 0 || password.length === 0) {
+      set_invalid_email_pass(true);
+      setTimeout(() => {
+        set_invalid_email_pass(false);
+      }, 800);
+    } else {
+      try {
+        const res = await axios.post(
+          "http://localhost:3000/login",
+          {
+            sending_email: email,
+            sending_password: password,
+          },
+          {
+            withCredentials: true, //for cookies and sessions across origins
+          }
+        );
         if (res.data === true) {
           setAuth({ token: true, loading: false });
 
           navigate("/home");
         }
-        else {
-        alert("Invalid credentials");
-      }
-
-         
       } catch (err) {
-        console.error(err.response?.data || err.message);
+        if (err.response?.status === 401) { //not the idealest. assuming every 401=wrong password.
+          set_wrong_password(true);
+          set_password("");
+          setTimeout(() => set_wrong_password(false), 800);
+        } else {
+          console.error(err);
+        }
       }
     }
   }
@@ -110,14 +116,19 @@ export default function Login() {
               className="w-full mb-6 px-4 py-3 rounded-md bg-black/40 border border-white/10 focus:outline-none focus:border-blue-500"
             />
             {password_error && (
-              <h1 className="text-red-500 mb-1">Too short password!</h1>
-            )}         
+              <h1 className="text-red-500 mb-5">Too short password!</h1>
+            )}
             {invalid_email_pass && (
-              <h1 className="text-red-500 mb-5">Invalid email or password</h1> )}  
+              <h1 className="text-red-500 mb-5">Invalid email or password</h1>
+            )}
+
+            {wrong_password && (
+              <h1 className="text-red-500 mb-5">Wrong Password.</h1>
+            )}
             {/* Buttons */}
             <div className="flex flex-col gap-4">
               {/* Primary */}
-              
+
               <button
                 type="button"
                 onClick={loginform}
