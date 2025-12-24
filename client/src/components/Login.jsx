@@ -38,7 +38,7 @@ export default function Login() {
           sending_password: password,
         },
         {
-          withCredentials: true  //for cookies and sessions
+          withCredentials: true  //for cookies and sessions across origins
         });
         if (res.data === true) {
           setAuth({ token: true, loading: false });

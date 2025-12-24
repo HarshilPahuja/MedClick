@@ -65,9 +65,7 @@ app.post("/signin", async (req, res) => {
 
       if (error) {
         console.error(error);
-      } else {
-        console.log("User inserted successfully"); // remove later
-      }
+      } 
     }
   );
 });
