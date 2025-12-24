@@ -8,8 +8,8 @@ UX
 //sign in while its signing in-loading screen.
 //sign in failed.-screen message.
 //sign in- email already exists
-
 //login loading screen while loggin gin.
+//when user comes they come to / but if theyre logged in fix so they come to /home or sth
 
 
 //logout-delete session
