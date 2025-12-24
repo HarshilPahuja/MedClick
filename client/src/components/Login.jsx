@@ -31,7 +31,8 @@ export default function Login() {
       const res = await axios.post("http://localhost:3000/signin", {
         sending_email: email,
         sending_password: password,
-      });
+      },
+      { withCredentials: true });
       if(res.data.success){
         setAuth({ token: true, loading: false });
         navigate("/home");

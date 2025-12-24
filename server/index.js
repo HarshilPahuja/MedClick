@@ -71,9 +71,14 @@ app.post("/signin", async (req, res) => {
 
         if (error) {
           return res.status(400).json({ success: false, error: error.message });
-        } else {
-          return res.status(200).json({ success: true });
-        }
+        } req.login(data, (err) => { //for signin session cookies
+          if (err) {
+            return res.status(500).json({ success: false });
+          }
+
+          
+          return res.status(200).json({ success: true, loggedIn: true });
+        });
       }
     );
   } catch (err) {
