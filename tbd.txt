@@ -1,5 +1,5 @@
 
-//then database medicine thing 
+// medicine -display after fetching from db
 //then firebase
 //oauth
 

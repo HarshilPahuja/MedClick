@@ -75,7 +75,6 @@ export default function Main(){
         }
         filledmed.final_days=meddays;
 
-        filledmed.final_dosage=Number(filledmed.final_dosage);
         const res=await axios.post("http://localhost:3000/storemeds", {filledmed},
           { withCredentials: true }
         );

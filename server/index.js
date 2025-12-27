@@ -53,19 +53,18 @@ app.post("/storemeds",async (req,res)=>{
     return res.status(401).json({ success: false, message: "Not authenticated" });
   }
   const to_store_obj=req.body.filledmed;
-//not the best choice, u need to make 2 tables id, email, pass then id,meds-- then user foreign keys etc.
 
-const {error}=await supabase
-  .from("authentication")
-  .update({
+ const { error } = await supabase.from("medicines").insert([
+    {
+    email: req.user.email,        
     med_name:to_store_obj.final_name,
     dosage:to_store_obj.final_dosage,
     instructions:to_store_obj.final_instruction,
     times_per_day:to_store_obj.final_timesperday,
     med_time:to_store_obj.final_times,
     days:to_store_obj.final_days
-  })
-  .eq("email", req.user.email);  
+    }
+  ]);
 
   if(error){
     return res.status(500).json({success:false, message:"Database error"});
@@ -95,7 +94,7 @@ app.post("/signin", async (req, res) => {
           ])
           .select("email, password")
           .single();
-
+          
         if (error) {
           return res.status(400).json({ success: false, error: error.message });
         } req.login(data, (err) => { //for signin session cookies // req.login() is the core Passport function that creates a session. passport.authenticate("local") just calls req.login() for you after verification. authenticate("local") verifies if correct user if valid calls req.login
