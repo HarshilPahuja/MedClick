@@ -45,7 +45,7 @@ export default function Main(){
 const deleteMedicineMutation = useMutation({
   mutationFn: (medName) =>
     axios.delete("http://localhost:3000/deletemed", {
-      data: { medName },        // axios needs `data` for DELETE
+      data: { medName },        
       withCredentials: true,
     }),
 
