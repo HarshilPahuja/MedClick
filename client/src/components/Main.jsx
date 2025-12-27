@@ -2,6 +2,8 @@ import Card from "./Card.jsx"
 import Modal from "./Modal.jsx";
 import {useState } from 'react';
 import AddIcon from '@mui/icons-material/Add';
+import axios from 'axios';
+
 
 //{
 // name:
@@ -29,25 +31,56 @@ export default function Main(){
     const [currentmed,setcurrentmed]=useState("");
 
     function remove(dawaikanaam){
-     pushmeds(meds.filter((name)=>{
-        return name!=dawaikanaam;
+     pushmeds(meds.filter((obj)=>{
+        return obj.final_name!=dawaikanaam;
      }));
     }
 
 
-    function closemodal(filledmed){
+   async function closemodal(filledmed){
 //         alert(
 //   `Name: ${filledmed.final_name}
 // Dosage: ${filledmed.final_dosage}
 // Instruction: ${filledmed.final_instruction}
-// Times/Day: ${filledmed.final_timesperday}
+// Times/Day: ${filledmed.final_timesperday} //array->int
 // Times: ${filledmed.final_times}
-// Day: ${filledmed.final_days}`
+// Day: ${filledmed.final_days}` //array->varchar [T,T,F,F,F,F,F,F,F]
 // ); //test
  
 
         togglemodal(false);
-        pushmeds([...meds,inputmed]); //need to push the object. currentlyl pushing the wrong thing, then line 72 will need to fix
+        if(filledmed.final_timesperday[0]){//1x
+            filledmed.final_timesperday=1;
+        }
+        else if(filledmed.final_timesperday[1]){
+            filledmed.final_timesperday=2;  //2x
+        }
+        else if(filledmed.final_timesperday[2]){
+            filledmed.final_timesperday=3; //3x
+        }
+        else{
+            filledmed.final_timesperday=0; //custom
+        }
+
+        const days=['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+        let indices=[];
+        filledmed.final_days.forEach((value,idx)=>{
+            if(value){
+                indices.push(idx);
+            }
+        });
+        let meddays=[];
+        for(let i=0; i<indices.length; i++){
+            meddays.push(days[indices[i]]);
+        }
+        filledmed.final_days=meddays;
+
+        filledmed.final_dosage=Number(filledmed.final_dosage);
+        const res=await axios.post("http://localhost:3000/storemeds", {filledmed},
+          { withCredentials: true }
+        );
+        
+        pushmeds([...meds, filledmed]); // pushing the final object. 
         changeinput("");
 
     }
@@ -84,7 +117,7 @@ export default function Main(){
             {showmodal && <Modal closemodalfromchild={closemodal} medname={currentmed}/>}
            
             {meds.map((med,index)=>{
-               return( <Card name={med} key={index} removemed={remove}/>);  
+               return( <Card name={med.final_name} key={index} removemed={remove}/>);  
             })}
         </>
     );
