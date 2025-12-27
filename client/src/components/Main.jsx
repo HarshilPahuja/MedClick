@@ -3,6 +3,8 @@ import Modal from "./Modal.jsx";
 import {useState } from 'react';
 import AddIcon from '@mui/icons-material/Add';
 import axios from 'axios';
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+
 
 
 //{
@@ -24,17 +26,42 @@ import axios from 'axios';
 //     }
 
 export default function Main(){
+    const queryClient = useQueryClient();
 
-    const [meds, pushmeds]=useState([]);   //array of objects
+     const addMedicineMutation = useMutation({
+  mutationFn: (filledmed) =>
+    axios.post(
+      "http://localhost:3000/storemeds",
+      { filledmed },
+      { withCredentials: true }
+    ),
+
+  onSuccess: () => {
+    // 🔥 THIS forces refetch of /getmeds
+    queryClient.invalidateQueries(['medicines']);
+  },
+});
+
+const deleteMedicineMutation = useMutation({
+  mutationFn: (medName) =>
+    axios.delete("http://localhost:3000/deletemed", {
+      data: { medName },        // axios needs `data` for DELETE
+      withCredentials: true,
+    }),
+
+  onSuccess: () => {
+    queryClient.invalidateQueries(['medicines']);
+  },
+});
+    
+
     const [inputmed, changeinput] =useState('');
     const [showmodal,togglemodal]=useState(false);
     const [currentmed,setcurrentmed]=useState("");
 
-    function remove(dawaikanaam){
-     pushmeds(meds.filter((obj)=>{
-        return obj.final_name!=dawaikanaam;
-     }));
-    }
+    function remove(dawaikanaam) {
+  deleteMedicineMutation.mutate(dawaikanaam);
+}
 
 
    async function closemodal(filledmed){
@@ -75,11 +102,10 @@ export default function Main(){
         }
         filledmed.final_days=meddays;
 
-        const res=await axios.post("http://localhost:3000/storemeds", {filledmed},
-          { withCredentials: true }
-        );
+       
+        addMedicineMutation.mutate(filledmed); //calls the mutation function
+
         
-        pushmeds([...meds, filledmed]); // pushing the final object. 
         changeinput("");
 
     }
@@ -99,6 +125,20 @@ export default function Main(){
 
     }
         
+    const { isPending, error, data } = useQuery({ //tanstack manages a stateful array itself.-data
+    queryKey: ['medicines'],
+    queryFn: async() =>{
+        const res = await axios.get("http://localhost:3000/getmeds", {
+        withCredentials: true,
+    });
+    return res.data;  //whatever u return from query function becomes data;
+    }
+    ,
+  })
+
+  if (isPending) return 'Loading...'
+  if (error) return 'An error has occurred: ' + error.message
+  
 
     return(
         <>
@@ -115,8 +155,8 @@ export default function Main(){
 
             {showmodal && <Modal closemodalfromchild={closemodal} medname={currentmed}/>}
            
-            {meds.map((med,index)=>{
-               return( <Card name={med.final_name} key={index} removemed={remove}/>);  
+            {data.map((med,index)=>{
+               return( <Card name={med.med_name} key={index} removemed={remove}/>);  
             })}
         </>
     );

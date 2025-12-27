@@ -35,7 +35,7 @@ app.use(bodyParser.urlencoded({ extended: true }));
 app.use(
   cors({
     origin: "http://localhost:5173",
-    methods: ["GET", "POST"],
+    methods: ["GET", "POST", "DELETE"],
     credentials: true,
   })
 );
@@ -72,6 +72,30 @@ app.post("/storemeds",async (req,res)=>{
   else{
     return res.json({ success: true });
   }
+});
+
+app.get("/getmeds", async(req,res)=>{
+  if(!req.isAuthenticated()){
+    return res.json({success:false, message:"not authenticated"});
+  }
+  const {data,error}=await supabase.from("medicines").select("*").eq("email", req.user.email);
+  if(error){
+    return res.json({success:false, message:"database error"});
+  }
+  res.json(data);
+});
+
+app.delete("/deletemed", async (req, res) => {
+  const { medName } = req.body;
+  const email = req.user.email;
+
+  await supabase
+    .from("medicines")
+    .delete()
+    .eq("email", email)
+    .eq("med_name", medName);
+    
+  res.json({ success: true });
 });
 
 app.post("/signin", async (req, res) => {

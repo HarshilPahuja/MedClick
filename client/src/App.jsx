@@ -4,11 +4,18 @@ import Home from './components/Home';
 import Login from './components/Login';
 import PrivateRoutes from './auth/PrivateRoutes';
 import PublicRoute from "./auth/PublicRoute";
+import {
+  QueryClient,
+  QueryClientProvider,
+  useQuery,
+} from '@tanstack/react-query'
 
+const queryClient = new QueryClient()
 
 export default function App(){
 return(
 <>
+<QueryClientProvider client={queryClient}>
 <BrowserRouter>
       <Routes>
         <Route element={<PublicRoute/>}>
@@ -19,6 +26,8 @@ return(
           </Route>
       </Routes>
  </BrowserRouter>
+</QueryClientProvider>
+
 </>  
 );
 
