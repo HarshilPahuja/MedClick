@@ -48,54 +48,96 @@ app.get("/me", (req, res) => {
   res.json({ authenticated: false });
 });
 
-app.post("/storemeds",async (req,res)=>{
-  if(!req.isAuthenticated()){
-    return res.status(401).json({ success: false, message: "Not authenticated" });
+app.post("/storemeds", async (req, res) => {
+  if (!req.isAuthenticated()) {
+    return res
+      .status(401)
+      .json({ success: false, message: "Not authenticated" });
   }
-  const to_store_obj=req.body.filledmed;
+  const to_store_obj = req.body.filledmed;
 
- const { error } = await supabase.from("medicines").insert([
+  const { error } = await supabase.from("medicines").insert([
     {
-    email: req.user.email,        
-    med_name:to_store_obj.final_name,
-    dosage:to_store_obj.final_dosage,
-    instructions:to_store_obj.final_instruction,
-    times_per_day:to_store_obj.final_timesperday,
-    med_time:to_store_obj.final_times,
-    days:to_store_obj.final_days
-    }
+      email: req.user.email,
+      med_name: to_store_obj.final_name,
+      dosage: to_store_obj.final_dosage,
+      instructions: to_store_obj.final_instruction,
+      times_per_day: to_store_obj.final_timesperday,
+      med_time: to_store_obj.final_times,
+      days: to_store_obj.final_days,
+    },
   ]);
 
-  if(error){
-    return res.status(500).json({success:false, message:"Database error"});
-  }
-  else{
+  if (error) {
+    return res.status(500).json({ success: false, message: "Database error" });
+  } else {
     return res.json({ success: true });
   }
 });
 
-app.get("/getmeds", async(req,res)=>{
-  if(!req.isAuthenticated()){
-    return res.json({success:false, message:"not authenticated"});
+app.get("/getmeds", async (req, res) => {
+  if (!req.isAuthenticated()) {
+    return res.json({ success: false, message: "not authenticated" });
   }
-  const {data,error}=await supabase.from("medicines").select("*").eq("email", req.user.email);
-  if(error){
-    return res.json({success:false, message:"database error"});
+  const { data, error } = await supabase
+    .from("medicines")
+    .select("*")
+    .eq("email", req.user.email);
+  if (error) {
+    return res.json({ success: false, message: "database error" });
   }
   res.json(data);
 });
 
-app.delete("/deletemed", async (req, res) => {
-  const { medName } = req.body;
-  const email = req.user.email;
+// app.delete("/deletemed", async (req, res) => {
+//   const { medName } = req.body;
+//   const email = req.user.email;
 
-  await supabase
-    .from("medicines")
-    .delete()
-    .eq("email", email)
-    .eq("med_name", medName);
-    
-  res.json({ success: true });
+//   await supabase
+//     .from("medicines")
+//     .delete()
+//     .eq("email", email)
+//     .eq("med_name", medName);
+
+//   res.json({ success: true });
+// });
+
+app.post("/medtaken", async (req, res) => {
+  if (!req.isAuthenticated()) {
+    return res.status(401).json({ success: false, message: "Unauthorized" });
+  }
+
+  const { dawaikanaam } = req.body;
+  const useremail = req.user.email;
+
+  const now = new Date();
+
+  const date = now.toISOString().split("T")[0]; // YYYY-MM-DD
+
+  const time = now
+    .toTimeString()
+    .slice(0, 8); // HH:MM:SS
+
+  const { data, error } = await supabase
+    .from("reminder")
+    .insert([
+      {
+        email: useremail,
+        med_name: dawaikanaam,
+        logged_date: date,
+        logged_time: time,
+      },
+    ]);
+
+  if (error) {
+    console.error(error);
+    return res.status(500).json({
+      success: false,
+      message: "database error",
+    });
+  }
+
+  return res.json({ success: true, data });
 });
 
 app.post("/signin", async (req, res) => {
@@ -118,15 +160,16 @@ app.post("/signin", async (req, res) => {
           ])
           .select("email, password")
           .single();
-          
+
         if (error) {
           return res.status(400).json({ success: false, error: error.message });
-        } req.login(data, (err) => { //for signin session cookies // req.login() is the core Passport function that creates a session. passport.authenticate("local") just calls req.login() for you after verification. authenticate("local") verifies if correct user if valid calls req.login
+        }
+        req.login(data, (err) => {
+          //for signin session cookies // req.login() is the core Passport function that creates a session. passport.authenticate("local") just calls req.login() for you after verification. authenticate("local") verifies if correct user if valid calls req.login
           if (err) {
             return res.status(500).json({ success: false });
           }
 
-          
           return res.status(200).json({ success: true, loggedIn: true });
         });
       }
