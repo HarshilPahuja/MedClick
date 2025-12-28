@@ -89,19 +89,6 @@ app.get("/getmeds", async (req, res) => {
   res.json(data);
 });
 
-// app.delete("/deletemed", async (req, res) => {
-//   const { medName } = req.body;
-//   const email = req.user.email;
-
-//   await supabase
-//     .from("medicines")
-//     .delete()
-//     .eq("email", email)
-//     .eq("med_name", medName);
-
-//   res.json({ success: true });
-// });
-
 app.post("/medtaken", async (req, res) => {
   if (!req.isAuthenticated()) {
     return res.status(401).json({ success: false, message: "Unauthorized" });
