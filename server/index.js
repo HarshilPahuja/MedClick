@@ -7,6 +7,7 @@ import session from "express-session";
 import passport from "passport";
 import { Strategy } from "passport-local";
 import cors from "cors";
+import admin from "./firebaseAdmin.js";
 
 const supabase = createClient(
   process.env.SUPABASE_URL,
@@ -125,6 +126,41 @@ app.post("/medtaken", async (req, res) => {
   }
 
   return res.json({ success: true, data });
+});
+
+app.post("/store-fcm-token", async (req, res) => {
+  if (!req.isAuthenticated()) {
+    return res.status(401).json({ error: "Not authenticated" });
+  }
+
+  const { token } = req.body;
+  const email = req.user.email;
+
+  await supabase
+    .from("authentication")
+  .update({ fcm_token: token })  
+  .eq("email", email);
+
+  res.json({ success: true });
+});
+
+app.post("/send-test-notification", async (req, res) => {
+  const { token } = req.body;
+
+  try {
+    await admin.messaging().send({
+      token,
+      notification: {
+        title: "MedClick",
+        body: "Time to take your medicine 💊",
+      },
+    });
+
+    res.json({ success: true });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: err.message });
+  }
 });
 
 app.post("/signin", async (req, res) => {

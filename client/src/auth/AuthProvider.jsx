@@ -1,4 +1,6 @@
 import { useState, useEffect, createContext, useContext } from "react";
+import { getFCMToken, listenForMessages } from "../fcm";
+
 import axios from "axios";
 
 const AuthContext = createContext(null);
@@ -6,7 +8,7 @@ const AuthContext = createContext(null);
 export default function AuthProvider({ children }) {
   const [auth, setAuth] = useState({
     token: false,
-    loading: true,   // 👈 IMPORTANT
+    loading: true, // 👈 IMPORTANT
   });
 
   useEffect(() => {
@@ -23,6 +25,25 @@ export default function AuthProvider({ children }) {
         setAuth({ token: false, loading: false });
       });
   }, []);
+
+useEffect(() => {
+  if (!auth.token) return;
+
+  const setupFCM = async () => {
+    let token=await getFCMToken();
+
+    await axios.post(
+      "http://localhost:3000/store-fcm-token",
+      { token },
+      { withCredentials: true }
+    );
+
+    listenForMessages();
+  };
+
+  setupFCM();
+}, [auth.token]);
+
 
   return (
     <AuthContext.Provider value={{ auth, setAuth }}>
