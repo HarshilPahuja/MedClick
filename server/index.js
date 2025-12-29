@@ -7,7 +7,6 @@ import session from "express-session";
 import passport from "passport";
 import { Strategy } from "passport-local";
 import cors from "cors";
-// import admin from "./firebaseAdmin.js";
 
 import "./cron/reminderCron.js";
 
@@ -146,24 +145,7 @@ app.post("/store-fcm-token", async (req, res) => {
   res.json({ success: true });
 });
 
-// app.post("/send-test-notification", async (req, res) => {
-//   const { token } = req.body;
 
-//   try {
-//     await admin.messaging().send({
-//       token,
-//       notification: {
-//         title: "MedClick",
-//         body: "Time to take your medicine 💊",
-//       },
-//     });
-
-//     res.json({ success: true });
-//   } catch (err) {
-//     console.error(err);
-//     res.status(500).json({ error: err.message });
-//   }
-// });
 
 app.post("/signin", async (req, res) => {
   try {

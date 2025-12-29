@@ -6,7 +6,7 @@ node-cron for cron job(every 5 mins)
 FCM firebase intergration for messaging.
 
 
-ensure- system notifications are on for chrome
+ensure- system notifications are on for browser. also see support matrix for firebase cloud messaging to see whatever shitty browser youre using works.
 
 will host it soon for everyone to use.
 
