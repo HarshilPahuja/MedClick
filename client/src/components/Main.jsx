@@ -50,7 +50,7 @@ export default function Main() {
     },{withCredentials:true});
 
     if(res.data.success){
-      alert("test- med logged");
+    queryClient.invalidateQueries(["medicines"]);
     }
   }
 

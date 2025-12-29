@@ -19,6 +19,9 @@ export default function Hero() {
   }, []);
 
   return( <>
+        <h1 className="text-3xl text-red-600">Please keep at least 6 hours between two doses of the same medicine.</h1>
+        <h2 className="text-2xl text-red-600">All medications listed below are either due now or scheduled soon. If they are shown, you may take them.</h2>
+
         <h1>{greeting}!👋</h1>
         <h3>Let's keep track of your medications today.</h3>
 

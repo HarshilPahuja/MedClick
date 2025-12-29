@@ -7,7 +7,11 @@ import session from "express-session";
 import passport from "passport";
 import { Strategy } from "passport-local";
 import cors from "cors";
-
+//t=medtime
+//due- t <= now <= t + 3 hours else missed.
+//upcoming- now < t <= now + 2 hours
+//provided its not there in logs for -3hr - t- +3hr
+// im assuming no one eats medicines so soon
 import "./cron/reminderCron.js";
 
 const supabase = createClient(
@@ -81,15 +85,77 @@ app.get("/getmeds", async (req, res) => {
   if (!req.isAuthenticated()) {
     return res.json({ success: false, message: "not authenticated" });
   }
-  const { data, error } = await supabase
+
+  // Fetch medicines
+  const { data: medicines, error } = await supabase
     .from("medicines")
     .select("*")
     .eq("email", req.user.email);
+
   if (error) {
     return res.json({ success: false, message: "database error" });
   }
-  res.json(data);
+
+  // Today info
+  const now = new Date();
+  const todayDate = now.toISOString().split("T")[0]; // YYYY-MM-DD
+  const todayName = now.toLocaleDateString("en-US", { weekday: "long" });
+
+  // Fetch today's reminder logs
+  const { data: logs } = await supabase
+    .from("reminder")
+    .select("med_name, logged_time")
+    .eq("email", req.user.email)
+    .eq("logged_date", todayDate);
+
+  let result = [];
+
+  for (const med of medicines) {
+    // Check if medicine is scheduled today
+    if (!med.days.includes(todayName)) continue;
+
+    for (const timeStr of med.med_time) {
+      // build scheduled time t
+      const [hh, mm] = timeStr.split(":").map(Number);
+      const t = new Date(now);
+      t.setHours(hh, mm, 0, 0);
+
+      const tMinus3 = new Date(t.getTime() - 3 * 60 * 60 * 1000);
+      const tPlus3  = new Date(t.getTime() + 3 * 60 * 60 * 1000);
+      const tPlus2  = new Date(t.getTime() + 2 * 60 * 60 * 1000);
+
+      // Check reminder logs in [-3h , +3h]
+      const alreadyLogged = logs?.some((log) => {
+        if (log.med_name !== med.med_name) return false;
+
+        const [lh, lm] = log.logged_time.split(":").map(Number);
+        const loggedAt = new Date(now);
+        loggedAt.setHours(lh, lm, 0, 0);
+
+        return loggedAt >= tMinus3 && loggedAt <= tPlus3;
+      });
+
+      if (alreadyLogged) continue;
+
+      // Due OR Upcoming
+      const isDue = now >= t && now <= tPlus3;
+      const isUpcoming = now < t && t <= tPlus2;
+
+      if (isDue || isUpcoming) {
+        result.push({
+          med_name: med.med_name,
+          dosage: med.dosage,
+          instructions: med.instructions,
+          med_time: timeStr,
+          times_per_day: med.times_per_day,
+        });
+      }
+    }
+  }
+
+  res.json(result);
 });
+
 
 app.post("/medtaken", async (req, res) => {
   if (!req.isAuthenticated()) {
