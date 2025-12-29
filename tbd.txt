@@ -1,5 +1,8 @@
 
 //then firebase
+//when user clicks a med, it stores in the logs with time and date. that user took them very good.
+//now we will make a backend cron job that runs every 5 mins.
+//sees all meds time and sees current time if currenttime>medtime+gracetime and doesnt see anything in log corresponding to it, it makes a notification
 //oauth
 
 
@@ -8,6 +11,6 @@ UX
 //sign in failed.-screen message.
 //sign in- email already exists
 //login loading screen while loggin gin.
-
+//all loading screens
 
 //logout-delete session
