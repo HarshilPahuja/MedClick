@@ -2,28 +2,34 @@ import cron from "node-cron";
 import { createClient } from "@supabase/supabase-js";
 import admin from "../firebaseAdmin.js";
 
+
+//due- t <= now <= t + 3 hours else missed.
+//upcoming- now < t <= now + 2 hours
+//provided its not there in logs for -2hr - t- +3hr
+
+// notification when
+// t <= now <= t + 3 hours
+// AND
+// NO log exists in [-2h , +3h]
+
+
 const supabase = createClient(
   process.env.SUPABASE_URL,
   process.env.SUPABASE_SECRET
 );
 
-const GRACE_MINUTES = 15;
-
-// helper: adds minutes to "HH:MM"
-function addMinutesToTime(timeStr, minutes) {
-  const [h, m] = timeStr.split(":").map(Number);
-  const d = new Date();
-  d.setHours(h, m + minutes, 0, 0);
-  return d.toTimeString().slice(0, 8); // HH:MM:SS
+// helper
+function buildDate(today, timeStr) {
+  return new Date(`${today}T${timeStr}:00`);
 }
 
 // runs every 5 minutes
 cron.schedule("*/5 * * * *", async () => {
-  console.log("cron running");
+  console.log("🔄 cron running");
 
   const now = new Date();
-  const today = now.toISOString().split("T")[0]; // YYYY-MM-DD
-  const todayName = now.toLocaleDateString("en-US", { weekday: "long" });  //day Name
+  const today = now.toISOString().split("T")[0];
+  const todayName = now.toLocaleDateString("en-US", { weekday: "long" });
 
   const { data: medicines, error } = await supabase
     .from("medicines")
@@ -37,43 +43,42 @@ cron.schedule("*/5 * * * *", async () => {
   for (const med of medicines) {
     const { email, med_name, med_time, days } = med;
 
-    // Skip if medicine not scheduled today
     if (!days.includes(todayName)) continue;
 
-    // Loop over each scheduled time
     for (const time of med_time) {
-      // time = "08:00"
+      const t = buildDate(today, time);
+      const tMinus2 = new Date(t.getTime() - 2 * 60 * 60 * 1000);
+      const tPlus3  = new Date(t.getTime() + 3 * 60 * 60 * 1000);
 
-      const medDateTime = new Date(`${today}T${time}:00`);
-      const graceDeadline = new Date(
-        medDateTime.getTime() + GRACE_MINUTES * 60000
-      );
+      // ignore past missed
+      if (now > tPlus3) continue;
 
-      // If still within grace window → skip
-      if (now <= graceDeadline) continue;
+      //  not due yet
+      if (now < t) continue;
 
-      //  Check if medicine was logged IN THIS SLOT ONLY
-      const upperTime = addMinutesToTime(time, GRACE_MINUTES);
+      //  now is in DUE window [t , t+3h]
 
       const { data: logs, error: logError } = await supabase
         .from("reminder")
-        .select("med_name")
+        .select("logged_time")
         .eq("email", email)
         .eq("med_name", med_name)
-        .eq("logged_date", today)
-        .gte("logged_time", time)       // >= scheduled time
-        .lt("logged_time", upperTime)   // < scheduled time + grace
-        .limit(1);
+        .eq("logged_date", today);
 
       if (logError) {
         console.error("Error checking reminder log:", logError);
         continue;
       }
 
-      // If already taken in this window → skip
-      if (logs && logs.length > 0) continue;
+      const taken = logs?.some((log) => {
+        const loggedAt = buildDate(today, log.logged_time);
+        return loggedAt >= tMinus2 && loggedAt <= tPlus3;
+      });
 
-      //  Fetch user's FCM token
+      // If taken → stop notifying
+      if (taken) continue;
+
+      // fetch FCM token
       const { data: user } = await supabase
         .from("authentication")
         .select("fcm_token")
@@ -82,17 +87,17 @@ cron.schedule("*/5 * * * *", async () => {
 
       if (!user?.fcm_token) continue;
 
-      //  Send notification
+      // 🔔DUE NOTIFICATION (EVERY CRON RUN)
       await admin.messaging().send({
         token: user.fcm_token,
         notification: {
-          title: "Medicine Reminder 💊",
-          body: `You missed ${med_name} scheduled at ${time}`,
+          title: "Medicine Due 💊",
+          body: `Please take ${med_name} scheduled at ${time}`,
         },
       });
 
       console.log(
-        `🔔 Reminder sent → ${email} | ${med_name} | ${time}`
+        `🔔 DUE → ${email} | ${med_name} | ${time}`
       );
     }
   }

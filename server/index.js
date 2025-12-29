@@ -10,7 +10,7 @@ import cors from "cors";
 //t=medtime
 //due- t <= now <= t + 3 hours else missed.
 //upcoming- now < t <= now + 2 hours
-//provided its not there in logs for -3hr - t- +3hr
+//provided its not there in logs for -2hr - t- +3hr //code till -3hr -t - +3hr but logically should be -2.
 // im assuming no one eats medicines so soon
 import "./cron/reminderCron.js";
 
