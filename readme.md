@@ -6,6 +6,8 @@ node-cron for cron job(every 5 mins)
 FCM firebase intergration for messaging.
 
 
+ensure- system notifications are on for chrome
+
 will host it soon for everyone to use.
 
 
