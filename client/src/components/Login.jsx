@@ -148,8 +148,11 @@ export default function Login() {
                 </button>
 
                 <button
-                  type="submit"
+                  type="button"
                   className="w-1/2 py-3 bg-white text-black rounded-md hover:bg-gray-200 transition flex items-center justify-center gap-2"
+                  onClick={() => {
+                    window.location.href = "http://localhost:3000/auth/google"; //oauth must do a full page redirect to work + cookies and sessions work properly. u can also use an anchor tag
+                   }}
                 >
                   <GoogleIcon />
                   <span className="text-sm font-medium">

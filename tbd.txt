@@ -1,6 +1,7 @@
 
 //ui- better cards showing all details etc. gg. 
-//oauth
+//need to add form validations alert messages etc.
+
 
 
 UX
@@ -11,3 +12,19 @@ UX
 //all loading screens
 
 //logout-delete session
+
+
+Issues
+1) If u put at 10:45am for tmrw mroning at night 9pm ,It wont show so create a seperate section called all meds added for all-
+ in that section only u can delete update etc also
+2) Scenario
+
+Login on PC → token A stored
+
+Login on Phone → token B stored (overwrites A)
+
+Result:
+
+Only the last logged-in device receives notifications
+
+The other device becomes silent

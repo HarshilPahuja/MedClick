@@ -6,6 +6,7 @@ import { createClient } from "@supabase/supabase-js";
 import session from "express-session";
 import passport from "passport";
 import { Strategy } from "passport-local";
+import GoogleStrategy from "passport-google-oauth2";
 import cors from "cors";
 //t=medtime
 //due- t <= now <= t + 3 hours else missed.
@@ -13,6 +14,7 @@ import cors from "cors";
 //provided its not there in logs for -2hr - t- +3hr //code till -3hr -t - +3hr but logically should be -2.
 // im assuming no one eats medicines so soon
 import "./cron/reminderCron.js";
+import { refreshToken } from "firebase-admin/app";
 
 const supabase = createClient(
   process.env.SUPABASE_URL,
@@ -121,8 +123,8 @@ app.get("/getmeds", async (req, res) => {
       t.setHours(hh, mm, 0, 0);
 
       const tMinus3 = new Date(t.getTime() - 3 * 60 * 60 * 1000);
-      const tPlus3  = new Date(t.getTime() + 3 * 60 * 60 * 1000);
-      const tPlus2  = new Date(t.getTime() + 2 * 60 * 60 * 1000);
+      const tPlus3 = new Date(t.getTime() + 3 * 60 * 60 * 1000);
+      const tPlus2 = new Date(t.getTime() + 2 * 60 * 60 * 1000);
 
       // Check reminder logs in [-3h , +3h]
       const alreadyLogged = logs?.some((log) => {
@@ -156,7 +158,6 @@ app.get("/getmeds", async (req, res) => {
   res.json(result);
 });
 
-
 app.post("/medtaken", async (req, res) => {
   if (!req.isAuthenticated()) {
     return res.status(401).json({ success: false, message: "Unauthorized" });
@@ -169,20 +170,16 @@ app.post("/medtaken", async (req, res) => {
 
   const date = now.toISOString().split("T")[0]; // YYYY-MM-DD
 
-  const time = now
-    .toTimeString()
-    .slice(0, 8); // HH:MM:SS
+  const time = now.toTimeString().slice(0, 8); // HH:MM:SS
 
-  const { data, error } = await supabase
-    .from("reminder")
-    .insert([
-      {
-        email: useremail,
-        med_name: dawaikanaam,
-        logged_date: date,
-        logged_time: time,
-      },
-    ]);
+  const { data, error } = await supabase.from("reminder").insert([
+    {
+      email: useremail,
+      med_name: dawaikanaam,
+      logged_date: date,
+      logged_time: time,
+    },
+  ]);
 
   if (error) {
     console.error(error);
@@ -205,13 +202,11 @@ app.post("/store-fcm-token", async (req, res) => {
 
   await supabase
     .from("authentication")
-  .update({ fcm_token: token })  
-  .eq("email", email);
+    .update({ fcm_token: token })
+    .eq("email", email);
 
   res.json({ success: true });
 });
-
-
 
 app.post("/signin", async (req, res) => {
   try {
@@ -256,8 +251,74 @@ app.post("/signin", async (req, res) => {
 app.post("/login", passport.authenticate("local"), async (req, res) => {
   return res.json(true);
 });
+//need to verify app for production use of oauth ig.
 
 passport.use(
+  "google",
+  new GoogleStrategy(
+    {
+      clientID: process.env.GOOGLE_CLIENT_ID,
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+      callbackURL: "http://localhost:3000/auth/google/callback",
+      userProfileURL: "https://www.googleapis.com/oauth2/v3/userinfo",
+    },
+    async (accessToken, refreshToken, profile, cb) => {
+      try {
+        const { data: checkdata, error: checkerror } = await supabase
+          .from("authentication")
+          .select("email")
+          .eq("email", profile.email)
+          .maybeSingle();
+        if (checkerror) {
+          return cb(checkerror);
+        }
+        if (!checkdata) {
+          //maybesingle returns one row(object) or null while single returns one row(object) or error
+          // user doesnt exist.(its sign in)
+          const { data, error } = await supabase
+            .from("authentication")
+            .insert([
+              {
+                email: profile.email,
+                password: "google",
+              },
+            ])
+            .select("email")
+            .single();
+
+          if (error) return cb(error);
+
+          return cb(null, data);
+        }
+        //its login using oauth
+
+        return cb(null, checkdata);
+      } catch (err) {
+        return cb(err);
+      }
+    }
+  )
+);
+
+app.get(
+  "/auth/google",
+  passport.authenticate("google", {
+    scope: ["profile", "email"],
+  })
+);
+
+app.get(
+  "/auth/google/callback",
+  passport.authenticate("google", {
+    failureRedirect: "/",
+  }),
+  (req, res) => {
+    res.redirect("http://localhost:5173/home");
+  }
+);
+
+passport.use(
+  "local",
   new Strategy(
     {
       usernameField: "sending_email",
