@@ -19,7 +19,7 @@ return(
 <BrowserRouter>
       <Routes>
         <Route element={<PublicRoute/>}>
-            <Route path="/" element={<Login />} />
+            <Route path="/" element={<Login />} /> 
         </Route>
          <Route element={<PrivateRoutes/>}>
             <Route path='/home' element={<Home/>} />
