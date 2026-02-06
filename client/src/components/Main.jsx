@@ -29,7 +29,7 @@ export default function Main() {
   const addMedicineMutation = useMutation({
     mutationFn: (filledmed) =>
       axios.post(
-        "http://localhost:3000/storemeds",
+        "https://medclick-5sc0.onrender.com/storemeds",
         { filledmed },
         { withCredentials: true }
       ),
@@ -45,7 +45,7 @@ export default function Main() {
   const [currentmed, setcurrentmed] = useState("");
 
   async function remove(dawaikanaam) {
-    const res=await axios.post("http://localhost:3000/medtaken",{
+    const res=await axios.post("https://medclick-5sc0.onrender.com/medtaken",{
       dawaikanaam
     },{withCredentials:true});
 
@@ -119,7 +119,7 @@ export default function Main() {
     //tanstack manages a stateful array itself.-data
     queryKey: ["medicines"],
     queryFn: async () => {
-      const res = await axios.get("http://localhost:3000/getmeds", {
+      const res = await axios.get("https://medclick-5sc0.onrender.com/getmeds", {
         withCredentials: true,
       });
       return res.data; //whatever u return from query function becomes data;

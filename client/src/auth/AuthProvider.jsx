@@ -13,7 +13,7 @@ export default function AuthProvider({ children }) {
 
   useEffect(() => {
     axios
-      .get("http://localhost:3000/me", { withCredentials: true })
+      .get("https://medclick-5sc0.onrender.com/me", { withCredentials: true })
       .then((res) => {
         if (res.data.authenticated) {
           setAuth({ token: true, loading: false });
@@ -33,7 +33,7 @@ useEffect(() => {
     let token=await getFCMToken();
 
     await axios.post(
-      "http://localhost:3000/store-fcm-token",
+      "https://medclick-5sc0.onrender.com/store-fcm-token",
       { token },
       { withCredentials: true }
     );

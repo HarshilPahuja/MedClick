@@ -30,7 +30,7 @@ export default function Login() {
     } else {
       try {
         const res = await axios.post(
-          "http://localhost:3000/signin",
+          "https://medclick-5sc0.onrender.com/signin",
           {
             sending_email: email,
             sending_password: password,
@@ -56,7 +56,7 @@ export default function Login() {
     } else {
       try {
         const res = await axios.post(
-          "http://localhost:3000/login",
+          "https://medclick-5sc0.onrender.com/login",
           {
             sending_email: email,
             sending_password: password,
@@ -151,7 +151,7 @@ export default function Login() {
                   type="button"
                   className="w-1/2 py-3 bg-white text-black rounded-md hover:bg-gray-200 transition flex items-center justify-center gap-2"
                   onClick={() => {
-                    window.location.href = "http://localhost:3000/auth/google"; //oauth must do a full page redirect to work + cookies and sessions work properly. u can also use an anchor tag
+                    window.location.href = "https://medclick-5sc0.onrender.com/auth/google"; //oauth must do a full page redirect to work + cookies and sessions work properly. u can also use an anchor tag
                    }}
                 >
                   <GoogleIcon />
