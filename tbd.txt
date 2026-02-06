@@ -27,4 +27,7 @@ Result:
 
 Only the last logged-in device receives notifications
 
+
 The other device becomes silent
+
+3) delete med after the set dose date.
