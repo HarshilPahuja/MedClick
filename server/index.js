@@ -42,7 +42,7 @@ app.use(passport.session());
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(
   cors({
-    origin: "https://medclick-one.vercel.app/",
+    origin: "https://medclick-one.vercel.app",
     methods: ["GET", "POST", "DELETE"],
     credentials: true,
   })
