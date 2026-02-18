@@ -6,7 +6,7 @@ export default function PrivateRoutes() {
 
   // ⏳ wait until auth state is known
   if (auth.loading) {
-    return <div>Loading...</div>; // or spinner
+    return <div>Loading... wait for backend to spin up(free tier)-can take upto 50 seconds</div>; // or spinner
   }
 
   // ❌ not authenticated

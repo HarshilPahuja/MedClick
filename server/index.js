@@ -22,6 +22,8 @@ const supabase = createClient(
 );
 
 const app = express();
+app.set("trust proxy", 1);
+
 const port = process.env.PORT || 3000;
 const saltRounds = 10;
 
@@ -32,9 +34,12 @@ app.use(
     saveUninitialized: false,
     cookie: {
       maxAge: 1000 * 60 * 60 * 24 * 30,
+      sameSite: "none",   // REQUIRED for cross-site
+      secure: true        // REQUIRED for https
     },
   })
 );
+
 
 app.use(passport.initialize());
 app.use(passport.session());

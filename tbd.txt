@@ -28,3 +28,7 @@ Result:
 Only the last logged-in device receives notifications
 
 The other device becomes silent
+
+
+3) need vercel.json 
+For ANY path requested ( /dashboard, /clubs, /profile ), always send index.html.
