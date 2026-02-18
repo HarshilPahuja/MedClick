@@ -27,8 +27,15 @@ Result:
 
 Only the last logged-in device receives notifications
 
+<<<<<<< HEAD
 The other device becomes silent
 
 
 3) need vercel.json 
 For ANY path requested ( /dashboard, /clubs, /profile ), always send index.html.
+=======
+
+The other device becomes silent
+
+3) delete med after the set dose date.
+>>>>>>> 461c21fd1c4d0aea92c6a86b52a197fc98ebdc00
