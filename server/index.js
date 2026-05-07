@@ -105,24 +105,22 @@ app.get("/getmeds", async (req, res) => {
 
   // Today info
   const now = new Date();
-  const todayDate = now.toISOString().split("T")[0]; // YYYY-MM-DD
   const todayName = now.toLocaleDateString("en-US", { weekday: "long" });
 
-  // Fetch today's reminder logs
+  // Fetch reminder logs from the last 24 hours to handle midnight crossovers
+  const yesterday = new Date(now.getTime() - 24 * 60 * 60 * 1000);
   const { data: logs } = await supabase
     .from("reminder")
-    .select("med_name, logged_time")
+    .select("med_name, logged_date, logged_time")
     .eq("email", req.user.email)
-    .eq("logged_date", todayDate);
+    .gte("logged_date", yesterday.toISOString().split("T")[0]);
 
   let result = [];
 
   for (const med of medicines) {
-    // Check if medicine is scheduled today
     if (!med.days.includes(todayName)) continue;
 
     for (const timeStr of med.med_time) {
-      // build scheduled time t
       const [hh, mm] = timeStr.split(":").map(Number);
       const t = new Date(now);
       t.setHours(hh, mm, 0, 0);
@@ -131,14 +129,10 @@ app.get("/getmeds", async (req, res) => {
       const tPlus3 = new Date(t.getTime() + 3 * 60 * 60 * 1000);
       const tPlus2 = new Date(t.getTime() + 2 * 60 * 60 * 1000);
 
-      // Check reminder logs in [-3h , +3h]
+      // Robust check: reconstruct full Date object for each log
       const alreadyLogged = logs?.some((log) => {
         if (log.med_name !== med.med_name) return false;
-
-        const [lh, lm] = log.logged_time.split(":").map(Number);
-        const loggedAt = new Date(now);
-        loggedAt.setHours(lh, lm, 0, 0);
-
+        const loggedAt = new Date(`${log.logged_date}T${log.logged_time}`);
         return loggedAt >= tMinus3 && loggedAt <= tPlus3;
       });
 
