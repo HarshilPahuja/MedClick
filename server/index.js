@@ -142,8 +142,6 @@ app.get("/getmeds", async (req, res) => {
         return loggedAt >= tMinus3 && loggedAt <= tPlus3;
       });
 
-      if (alreadyLogged) continue;
-
       // Due OR Upcoming
       const isDue = now >= t && now <= tPlus3;
       const isUpcoming = now < t && t <= tPlus2;
@@ -155,6 +153,7 @@ app.get("/getmeds", async (req, res) => {
           instructions: med.instructions,
           med_time: timeStr,
           times_per_day: med.times_per_day,
+          isTaken: !!alreadyLogged, // Include taken status
         });
       }
     }

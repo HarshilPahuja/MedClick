@@ -3,11 +3,18 @@ import RadioButtonUncheckedIcon from '@mui/icons-material/RadioButtonUnchecked';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import EditIcon from '@mui/icons-material/Edit';
 import AccessTimeIcon from '@mui/icons-material/AccessTime';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
-export default function Card({ med, type = "due", onAction, onEdit, isTakenInitial = false }) {
+export default function Card({ med, type = "due", onAction, onEdit }) {
   const { med_name, dosage, instructions, med_time } = med;
-  const [isTaken, setIsTaken] = useState(isTakenInitial);
+  const [isTaken, setIsTaken] = useState(med.isTaken || false);
+
+  // Sync state if server data changes (e.g. after refresh/refetch)
+  useEffect(() => {
+    if (type === "due") {
+      setIsTaken(med.isTaken || false);
+    }
+  }, [med.isTaken, type]);
 
   const handleAction = async () => {
     if (type === "due" && !isTaken) {
