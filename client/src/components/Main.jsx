@@ -27,6 +27,10 @@ export default function Main() {
       queryClient.invalidateQueries(["all-medicines"]);
       setToast({ open: true, message: "Medication added successfully!", severity: "success" });
     },
+    onError: (err) => {
+      const msg = err.response?.data?.message || "Error adding medication.";
+      setToast({ open: true, message: msg, severity: "error" });
+    },
   });
 
   const updateMedicineMutation = useMutation({
@@ -41,6 +45,10 @@ export default function Main() {
       queryClient.invalidateQueries(["all-medicines"]);
       setToast({ open: true, message: "Medication updated!", severity: "success" });
     },
+    onError: (err) => {
+      const msg = err.response?.data?.message || "Error updating medication.";
+      setToast({ open: true, message: msg, severity: "error" });
+    },
   });
 
   const deleteMedicineMutation = useMutation({
@@ -52,6 +60,10 @@ export default function Main() {
       queryClient.invalidateQueries(["due-medicines"]);
       queryClient.invalidateQueries(["all-medicines"]);
       setToast({ open: true, message: "Medication deleted.", severity: "info" });
+    },
+    onError: (err) => {
+      const msg = err.response?.data?.message || "Error deleting medication.";
+      setToast({ open: true, message: msg, severity: "error" });
     },
   });
 

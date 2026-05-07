@@ -63,11 +63,21 @@ app.get("/me", (req, res) => {
 
 app.post("/storemeds", async (req, res) => {
   if (!req.isAuthenticated()) {
-    return res
-      .status(401)
-      .json({ success: false, message: "Not authenticated" });
+    return res.status(401).json({ success: false, message: "Not authenticated" });
   }
   const to_store_obj = req.body.filledmed;
+
+  // Check if medicine with same name already exists for this user
+  const { data: existing } = await supabase
+    .from("medicines")
+    .select("med_name")
+    .eq("email", req.user.email)
+    .eq("med_name", to_store_obj.final_name)
+    .maybeSingle();
+
+  if (existing) {
+    return res.status(400).json({ success: false, message: "Medicine already exists in cabinet." });
+  }
 
   const { error } = await supabase.from("medicines").insert([
     {
@@ -93,27 +103,23 @@ app.get("/getmeds", async (req, res) => {
     return res.json({ success: false, message: "not authenticated" });
   }
 
-  // Fetch medicines
   const { data: medicines, error } = await supabase
     .from("medicines")
     .select("*")
     .eq("email", req.user.email);
 
-  if (error) {
-    return res.json({ success: false, message: "database error" });
-  }
+  if (error) return res.json({ success: false, message: "database error" });
 
-  // Today info
   const now = new Date();
   const todayName = now.toLocaleDateString("en-US", { weekday: "long" });
 
-  // Fetch reminder logs from the last 24 hours to handle midnight crossovers
+  // Fetch all logs from the last 24 hours for safety and persistence
   const yesterday = new Date(now.getTime() - 24 * 60 * 60 * 1000);
   const { data: logs } = await supabase
     .from("reminder")
     .select("med_name, logged_date, logged_time")
     .eq("email", req.user.email)
-    .gte("logged_date", yesterday.toISOString().split("T")[0]);
+    .gte("logged_date", yesterday.toLocaleDateString('en-CA'));
 
   let result = [];
 
@@ -125,18 +131,22 @@ app.get("/getmeds", async (req, res) => {
       const t = new Date(now);
       t.setHours(hh, mm, 0, 0);
 
+      // Windows
       const tMinus3 = new Date(t.getTime() - 3 * 60 * 60 * 1000);
       const tPlus3 = new Date(t.getTime() + 3 * 60 * 60 * 1000);
       const tPlus2 = new Date(t.getTime() + 2 * 60 * 60 * 1000);
 
-      // Robust check: reconstruct full Date object for each log
-      const alreadyLogged = logs?.some((log) => {
+      // Check if taken within the 6-hour safety window relative to NOW
+      // OR within the current dose window [t-3, t+3]
+      const sixHoursAgo = new Date(now.getTime() - 6 * 60 * 60 * 1000);
+      
+      const isTaken = logs?.some((log) => {
         if (log.med_name !== med.med_name) return false;
         const loggedAt = new Date(`${log.logged_date}T${log.logged_time}`);
-        return loggedAt >= tMinus3 && loggedAt <= tPlus3;
+        // If taken in the last 6 hours OR within this specific dose's window
+        return (loggedAt >= sixHoursAgo) || (loggedAt >= tMinus3 && loggedAt <= tPlus3);
       });
 
-      // Due OR Upcoming
       const isDue = now >= t && now <= tPlus3;
       const isUpcoming = now < t && t <= tPlus2;
 
@@ -147,7 +157,7 @@ app.get("/getmeds", async (req, res) => {
           instructions: med.instructions,
           med_time: timeStr,
           times_per_day: med.times_per_day,
-          isTaken: !!alreadyLogged, // Include taken status
+          isTaken: !!isTaken,
         });
       }
     }
@@ -204,18 +214,19 @@ app.post("/medtaken", async (req, res) => {
   const useremail = req.user.email;
   const now = new Date();
 
-  // 6-hour safety check
-  const sixHoursAgo = new Date(now.getTime() - 6 * 60 * 60 * 1000);
-  const sixHoursAgoISO = sixHoursAgo.toISOString();
-  const sixHoursAgoDate = sixHoursAgoISO.split("T")[0];
-  const sixHoursAgoTime = sixHoursAgoISO.split("T")[1].split(".")[0];
+  // Unified Local-to-Server Date/Time (Avoid mixing ISO UTC with Local Time)
+  const localDate = now.toLocaleDateString('en-CA'); // YYYY-MM-DD
+  const localTime = now.toTimeString().slice(0, 8); // HH:MM:SS
 
-  const { data: recentLogs, error: logError } = await supabase
+  // 6-hour safety check using a robust timestamp
+  const sixHoursAgo = new Date(now.getTime() - 6 * 60 * 60 * 1000);
+
+  const { data: recentLogs } = await supabase
     .from("reminder")
     .select("*")
     .eq("email", useremail)
     .eq("med_name", dawaikanaam)
-    .gte("logged_date", sixHoursAgoDate);
+    .gte("logged_date", new Date(now.getTime() - 24 * 60 * 60 * 1000).toLocaleDateString('en-CA'));
 
   if (recentLogs) {
     const isTooSoon = recentLogs.some(log => {
@@ -231,24 +242,18 @@ app.post("/medtaken", async (req, res) => {
     }
   }
 
-  const date = now.toISOString().split("T")[0]; // YYYY-MM-DD
-  const time = now.toTimeString().slice(0, 8); // HH:MM:SS
-
   const { data, error } = await supabase.from("reminder").insert([
     {
       email: useremail,
       med_name: dawaikanaam,
-      logged_date: date,
-      logged_time: time,
+      logged_date: localDate,
+      logged_time: localTime,
     },
   ]);
 
   if (error) {
     console.error(error);
-    return res.status(500).json({
-      success: false,
-      message: "database error",
-    });
+    return res.status(500).json({ success: false, message: "database error" });
   }
 
   return res.json({ success: true, data });
