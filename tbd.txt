@@ -4,15 +4,6 @@
 
 
 
-UX
-//sign in while its signing in-loading screen.
-//sign in failed.-screen message.
-//sign in- email already exists
-//login loading screen while loggin gin.
-//all loading screens
-
-//logout-delete session
-
 
 Issues
 1) If u put at 10:45am for tmrw mroning at night 9pm ,It wont show so create a seperate section called all meds added for all-

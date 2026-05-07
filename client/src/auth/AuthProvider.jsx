@@ -45,12 +45,17 @@ useEffect(() => {
 }, [auth.token]);
 
 
+  const logout = () => {
+    setAuth({ token: false, loading: false });
+  };
+
   return (
-    <AuthContext.Provider value={{ auth, setAuth }}>
+    <AuthContext.Provider value={{ auth, setAuth, logout }}>
       {children}
     </AuthContext.Provider>
   );
 }
+
 
 export function useAuth() {
   return useContext(AuthContext);

@@ -4,6 +4,8 @@ import { useAuth } from "../auth/AuthProvider";
 import { useNavigate } from "react-router-dom";
 import { useState } from "react";
 import axios from "axios";
+import LoadingSpinner from "./LoadingSpinner";
+
 
 export default function Login() {
   const { setAuth } = useAuth();
@@ -14,6 +16,10 @@ export default function Login() {
   const [password_error, set_password_error] = useState(false);
   const [invalid_email_pass, set_invalid_email_pass] = useState(false);
   const [wrong_password, set_wrong_password] = useState(false);
+  const [email_exists, set_email_exists] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error_msg, set_error_msg] = useState("");
+
 
   async function signup(e) {
     e.preventDefault();
@@ -28,6 +34,7 @@ export default function Login() {
         set_password_error(false);
       }, 800);
     } else {
+      setIsLoading(true);
       try {
         const res = await axios.post(
           "https://medclick-5sc0.onrender.com/signin",
@@ -42,9 +49,19 @@ export default function Login() {
           navigate("/home");
         }
       } catch (err) {
+        if (err.response?.status === 400 && err.response?.data?.error?.includes("duplicate")) {
+          set_email_exists(true);
+          setTimeout(() => set_email_exists(false), 2000);
+        } else {
+          set_error_msg("Sign in failed. Please try again.");
+          setTimeout(() => set_error_msg(""), 2000);
+        }
         console.error(err.response?.data || err.message);
+      } finally {
+        setIsLoading(false);
       }
     }
+
   }
 
   async function loginform() {
@@ -54,6 +71,7 @@ export default function Login() {
         set_invalid_email_pass(false);
       }, 800);
     } else {
+      setIsLoading(true);
       try {
         const res = await axios.post(
           "https://medclick-5sc0.onrender.com/login",
@@ -74,12 +92,17 @@ export default function Login() {
         if (err.response?.status === 401) { //not the idealest. assuming every 401=wrong password.
           set_wrong_password(true);
           set_password("");
-          setTimeout(() => set_wrong_password(false), 800);
+          setTimeout(() => set_wrong_password(false), 2000);
         } else {
-          console.error(err);
+          set_error_msg("Login failed. Please try again.");
+          setTimeout(() => set_error_msg(""), 2000);
         }
+        console.error(err);
+      } finally {
+        setIsLoading(false);
       }
     }
+
   }
 
   return (
@@ -125,6 +148,13 @@ export default function Login() {
             {wrong_password && (
               <h1 className="text-red-500 mb-5">Incorrect Email or Password.</h1>
             )}
+            {email_exists && (
+              <h1 className="text-red-500 mb-5">Email already exists.</h1>
+            )}
+            {error_msg && (
+              <h1 className="text-red-500 mb-5">{error_msg}</h1>
+            )}
+
             {/* Buttons */}
             <div className="flex flex-col gap-4">
               {/* Primary */}
@@ -132,9 +162,10 @@ export default function Login() {
               <button
                 type="button"
                 onClick={loginform}
-                className="w-full py-3 bg-blue-600 rounded-md hover:bg-blue-700 transition font-medium"
+                disabled={isLoading}
+                className="w-full py-3 bg-blue-600 rounded-md hover:bg-blue-700 transition font-medium flex items-center justify-center gap-2"
               >
-                Login
+                {isLoading ? <LoadingSpinner size="h-5 w-5" color="border-white" /> : "Login"}
               </button>
 
               {/* Secondary actions */}
@@ -142,10 +173,12 @@ export default function Login() {
               <div className="flex gap-3">
                 <button
                   type="submit"
-                  className="w-1/2 py-3 bg-white/10 border border-white/20 rounded-md hover:bg-white/20 transition"
+                  disabled={isLoading}
+                  className="w-1/2 py-3 bg-white/10 border border-white/20 rounded-md hover:bg-white/20 transition flex items-center justify-center gap-2"
                 >
-                  Sign in
+                  {isLoading ? <LoadingSpinner size="h-5 w-5" color="border-white" /> : "Sign in"}
                 </button>
+
 
                 <button
                   type="button"

@@ -256,6 +256,22 @@ app.post("/signin", async (req, res) => {
 app.post("/login", passport.authenticate("local"), async (req, res) => {
   return res.json(true);
 });
+
+app.post("/logout", (req, res) => {
+  req.logout((err) => {
+    if (err) {
+      return res.status(500).json({ success: false, message: "Logout failed" });
+    }
+    req.session.destroy((err) => {
+      if (err) {
+        return res.status(500).json({ success: false, message: "Session destruction failed" });
+      }
+      res.clearCookie("connect.sid"); // Clear the session cookie
+      return res.json({ success: true });
+    });
+  });
+});
+
 //need to verify app for production use of oauth ig.
 
 passport.use(
