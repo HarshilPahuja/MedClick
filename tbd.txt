@@ -1,14 +1,11 @@
 
-//ui- better cards showing all details etc. gg. 
-//need to add form validations alert messages etc.
+
+1) save name in db, and main section change to Hello <name>
+2) fix cron notification of fcm
 
 
 
-
-Issues
-1) If u put at 10:45am for tmrw mroning at night 9pm ,It wont show so create a seperate section called all meds added for all-
- in that section only u can delete update etc also
-2) Scenario
+Issues left:-
 
 Login on PC → token A stored
 
