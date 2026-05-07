@@ -163,23 +163,28 @@ app.get("/getmeds", async (req, res) => {
       // Windows
       const tMinus3 = new Date(t.getTime() - 3 * 60 * 60 * 1000);
       const tPlus3 = new Date(t.getTime() + 3 * 60 * 60 * 1000);
-      const tPlus2 = new Date(t.getTime() + 2 * 60 * 60 * 1000);
-
-      // Check if taken within the 6-hour safety window relative to NOW
-      // OR within the current dose window [t-3, t+3]
-      const sixHoursAgo = new Date(now.getTime() - 6 * 60 * 60 * 1000);
-      
-      const isTaken = logs?.some((log) => {
-        if (log.med_name !== med.med_name) return false;
-        const loggedAt = new Date(`${log.logged_date}T${log.logged_time}`);
-        // If taken in the last 6 hours OR within this specific dose's window
-        return (loggedAt >= sixHoursAgo) || (loggedAt >= tMinus3 && loggedAt <= tPlus3);
-      });
+      const nowPlus2 = new Date(now.getTime() + 2 * 60 * 60 * 1000);
 
       const isDue = now >= t && now <= tPlus3;
-      const isUpcoming = now < t && t <= tPlus2;
+      const isUpcoming = now < t && t <= nowPlus2;
 
       if (isDue || isUpcoming) {
+        // Check if taken within the 6-hour safety window relative to NOW
+        // OR within this specific dose's window [t-3, t+3]
+        const sixHoursAgo = new Date(now.getTime() - 6 * 60 * 60 * 1000);
+        
+        const isTaken = logs?.some((log) => {
+          if (log.med_name !== med.med_name) return false;
+          const loggedAt = new Date(`${log.logged_date}T${log.logged_time}`);
+          
+          // It's "taken" if it was logged within this dose's specific window
+          const withinDoseWindow = (loggedAt >= tMinus3 && loggedAt <= tPlus3);
+          // OR if it's currently blocked by the 6-hour safety rule
+          const blockedBySafety = (loggedAt >= sixHoursAgo);
+          
+          return withinDoseWindow || blockedBySafety;
+        });
+
         result.push({
           med_name: med.med_name,
           dosage: med.dosage,
