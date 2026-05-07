@@ -163,6 +163,45 @@ app.get("/getmeds", async (req, res) => {
   res.json(result);
 });
 
+app.get("/allmeds", async (req, res) => {
+  if (!req.isAuthenticated()) {
+    return res.status(401).json({ success: false, message: "Not authenticated" });
+  }
+
+  const { data, error } = await supabase
+    .from("medicines")
+    .select("*")
+    .eq("email", req.user.email);
+
+  if (error) {
+    return res.status(500).json({ success: false, message: "Database error" });
+  }
+
+  res.json(data);
+});
+
+app.delete("/deletemed/:name", async (req, res) => {
+  if (!req.isAuthenticated()) {
+    return res.status(401).json({ success: false, message: "Not authenticated" });
+  }
+
+  const { name } = req.params;
+  const email = req.user.email;
+
+  const { error } = await supabase
+    .from("medicines")
+    .delete()
+    .eq("email", email)
+    .eq("med_name", name);
+
+  if (error) {
+    return res.status(500).json({ success: false, message: "Database error" });
+  }
+
+  res.json({ success: true });
+});
+
+
 app.post("/medtaken", async (req, res) => {
   if (!req.isAuthenticated()) {
     return res.status(401).json({ success: false, message: "Unauthorized" });
@@ -170,11 +209,36 @@ app.post("/medtaken", async (req, res) => {
 
   const { dawaikanaam } = req.body;
   const useremail = req.user.email;
-
   const now = new Date();
 
-  const date = now.toISOString().split("T")[0]; // YYYY-MM-DD
+  // 6-hour safety check
+  const sixHoursAgo = new Date(now.getTime() - 6 * 60 * 60 * 1000);
+  const sixHoursAgoISO = sixHoursAgo.toISOString();
+  const sixHoursAgoDate = sixHoursAgoISO.split("T")[0];
+  const sixHoursAgoTime = sixHoursAgoISO.split("T")[1].split(".")[0];
 
+  const { data: recentLogs, error: logError } = await supabase
+    .from("reminder")
+    .select("*")
+    .eq("email", useremail)
+    .eq("med_name", dawaikanaam)
+    .gte("logged_date", sixHoursAgoDate);
+
+  if (recentLogs) {
+    const isTooSoon = recentLogs.some(log => {
+      const logDateTime = new Date(`${log.logged_date}T${log.logged_time}`);
+      return logDateTime >= sixHoursAgo;
+    });
+
+    if (isTooSoon) {
+      return res.status(400).json({
+        success: false,
+        message: "Safety Warning: Please keep at least 6 hours between two doses of the same medicine."
+      });
+    }
+  }
+
+  const date = now.toISOString().split("T")[0]; // YYYY-MM-DD
   const time = now.toTimeString().slice(0, 8); // HH:MM:SS
 
   const { data, error } = await supabase.from("reminder").insert([
@@ -197,6 +261,7 @@ app.post("/medtaken", async (req, res) => {
   return res.json({ success: true, data });
 });
 
+
 app.post("/store-fcm-token", async (req, res) => {
   if (!req.isAuthenticated()) {
     return res.status(401).json({ error: "Not authenticated" });
@@ -212,6 +277,35 @@ app.post("/store-fcm-token", async (req, res) => {
 
   res.json({ success: true });
 });
+
+app.post("/updatemed", async (req, res) => {
+  if (!req.isAuthenticated()) {
+    return res.status(401).json({ success: false, message: "Not authenticated" });
+  }
+
+  const { filledmed } = req.body;
+  const email = req.user.email;
+
+  const { error } = await supabase
+    .from("medicines")
+    .update({
+      dosage: filledmed.final_dosage,
+      instructions: filledmed.final_instruction,
+      times_per_day: filledmed.final_timesperday,
+      med_time: filledmed.final_times,
+      days: filledmed.final_days,
+    })
+    .eq("email", email)
+    .eq("med_name", filledmed.final_name);
+
+  if (error) {
+    return res.status(500).json({ success: false, message: "Database error" });
+  }
+
+  res.json({ success: true });
+});
+
+
 
 app.post("/signin", async (req, res) => {
   try {

@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { useState } from 'react';
 import LoadingSpinner from './LoadingSpinner';
+import LogoutIcon from '@mui/icons-material/Logout';
 
 export default function Navbar() {
   const { logout } = useAuth();
@@ -18,7 +19,6 @@ export default function Navbar() {
       navigate("/");
     } catch (err) {
       console.error("Logout failed:", err);
-      // Even if server call fails, we should probably clear local state
       logout();
       navigate("/");
     } finally {
@@ -27,25 +27,39 @@ export default function Navbar() {
   };
 
   return (
-    <>
-      <nav className='flex items-center justify-between px-10 border-b border-gray-300 bg-[#fbfdff] h-[14vh]'>
-        <div className='flex items-center gap-5'>
-          <VolunteerActivismIcon />
-          <div className='flex flex-col'>
-            <h1 className="text-3xl font-normal text-gray-700" style={{ fontFamily: 'Oswald, sans-serif' }}>MediClick</h1>
-            <h3>Your Medication Companion</h3>
+    <nav className="sticky top-0 z-40 w-full border-b border-white/10 bg-black/50 backdrop-blur-md">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="flex justify-between items-center h-20">
+          <div className="flex items-center gap-3">
+            <div className="bg-blue-600 p-2 rounded-xl shadow-lg shadow-blue-600/30">
+              <VolunteerActivismIcon className="text-white" />
+            </div>
+            <div className="flex flex-col">
+              <h1 className="text-2xl font-black text-white tracking-tight">
+                MEDI<span className="text-blue-500">CLICK</span>
+              </h1>
+              <span className="text-[10px] text-gray-400 uppercase tracking-[0.2em] font-bold">
+                Medication Companion
+              </span>
+            </div>
           </div>
+          
+          <button
+            onClick={handleLogout}
+            disabled={isLoggingOut}
+            className="group relative flex items-center gap-2 px-5 py-2.5 bg-white/5 hover:bg-red-500/10 text-gray-300 hover:text-red-400 rounded-xl border border-white/10 hover:border-red-500/30 transition-all duration-300 font-medium overflow-hidden"
+          >
+            {isLoggingOut ? (
+              <LoadingSpinner size="h-4 w-4" color="border-red-400" />
+            ) : (
+              <>
+                <LogoutIcon fontSize="small" />
+                <span>Logout</span>
+              </>
+            )}
+          </button>
         </div>
-        <button
-          onClick={handleLogout}
-          disabled={isLoggingOut}
-          className="px-6 py-2 bg-red-500 text-white rounded-md hover:bg-red-600 transition flex items-center gap-2"
-        >
-          {isLoggingOut ? <LoadingSpinner size="h-4 w-4" color="border-white" /> : "Logout"}
-        </button>
-      </nav>
-    </>
+      </div>
+    </nav>
   );
-}
-
-//issue1: inline google font works, but using tailwind it doesnt work.
+}
