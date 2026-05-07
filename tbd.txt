@@ -1,0 +1,2 @@
+- just check for 2 meds together, clicking 1 doesnt affect other and if other is working
+rest works.
