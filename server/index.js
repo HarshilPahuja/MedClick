@@ -280,7 +280,8 @@ passport.use(
     {
       clientID: process.env.GOOGLE_CLIENT_ID,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-      callbackURL: "http://localhost:3000/auth/google/callback",
+      callbackURL: "https://medclick-5sc0.onrender.com/auth/google/callback",
+
       userProfileURL: "https://www.googleapis.com/oauth2/v3/userinfo",
     },
     async (accessToken, refreshToken, profile, cb) => {
@@ -334,7 +335,8 @@ app.get(
     failureRedirect: "/",
   }),
   (req, res) => {
-    res.redirect("http://localhost:5173/home");
+    res.redirect("https://medclick-one.vercel.app/home");
+
   }
 );
 
