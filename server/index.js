@@ -61,11 +61,40 @@ app.get("/me", (req, res) => {
   res.json({ authenticated: false });
 });
 
+// Helper to check 6-hour gap between times
+function hasSixHourGap(times) {
+  if (!times || times.length <= 1) return true;
+  
+  // Convert all times to minutes from midnight for easy comparison
+  const minutes = times.map(t => {
+    const [h, m] = t.split(':').map(Number);
+    return h * 60 + m;
+  }).sort((a, b) => a - b);
+
+  for (let i = 0; i < minutes.length - 1; i++) {
+    if (minutes[i + 1] - minutes[i] < 6 * 60) return false;
+  }
+  
+  // Also check circular gap (last to first across midnight)
+  const circularGap = (1440 - minutes[minutes.length - 1]) + minutes[0];
+  if (circularGap < 6 * 60) return false;
+
+  return true;
+}
+
 app.post("/storemeds", async (req, res) => {
   if (!req.isAuthenticated()) {
     return res.status(401).json({ success: false, message: "Not authenticated" });
   }
   const to_store_obj = req.body.filledmed;
+
+  // Validate 6-hour gap between scheduled times
+  if (!hasSixHourGap(to_store_obj.final_times)) {
+    return res.status(400).json({ 
+      success: false, 
+      message: "Safety Rule: Scheduled doses for the same medicine must be at least 6 hours apart." 
+    });
+  }
 
   // Check if medicine with same name already exists for this user
   const { data: existing } = await supabase
@@ -283,6 +312,14 @@ app.post("/updatemed", async (req, res) => {
 
   const { filledmed } = req.body;
   const email = req.user.email;
+
+  // Validate 6-hour gap between scheduled times
+  if (!hasSixHourGap(filledmed.final_times)) {
+    return res.status(400).json({ 
+      success: false, 
+      message: "Safety Rule: Scheduled doses for the same medicine must be at least 6 hours apart." 
+    });
+  }
 
   const { error } = await supabase
     .from("medicines")

@@ -37,6 +37,28 @@ export default function Modal({ closemodalfromchild, medname, initialData = null
 
   function finalsubmit(e) {
     e.preventDefault();
+    
+    // Validate 6-hour gap
+    if (time.length > 1) {
+      const minutes = time.map(t => {
+        const [h, m] = t.split(':').map(Number);
+        return h * 60 + m;
+      }).sort((a, b) => a - b);
+
+      for (let i = 0; i < minutes.length - 1; i++) {
+        if (minutes[i + 1] - minutes[i] < 6 * 60) {
+          alert("Safety Rule: Scheduled doses for the same medicine must be at least 6 hours apart.");
+          return;
+        }
+      }
+      
+      const circularGap = (1440 - minutes[minutes.length - 1]) + minutes[0];
+      if (circularGap < 6 * 60) {
+        alert("Safety Rule: Doses across midnight must also be at least 6 hours apart.");
+        return;
+      }
+    }
+
     const finalobject = {
       final_name: medname,
       final_dosage: dosage,
