@@ -6,6 +6,7 @@ import axios from "axios";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Snackbar, Alert, Tabs, Tab, Box } from "@mui/material";
 import MedicationIcon from '@mui/icons-material/Medication';
+import { useAuth } from "../auth/AuthProvider";
 import TodayIcon from '@mui/icons-material/Today';
 import InventoryIcon from '@mui/icons-material/Inventory';
 
