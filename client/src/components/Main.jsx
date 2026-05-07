@@ -146,7 +146,6 @@ export default function Main() {
       const res = await axios.get(`https://medclick-5sc0.onrender.com/getmeds?day=${day}`, { withCredentials: true });
       
       const now = new Date();
-      const sixHoursAgo = new Date(now.getTime() - 6 * 60 * 60 * 1000);
       const nowPlus2 = new Date(now.getTime() + 2 * 60 * 60 * 1000);
 
       // Filter and transform meds based on local time
@@ -165,7 +164,7 @@ export default function Main() {
           
           med.isTaken = med.logs?.some(log => {
             const loggedAt = new Date(`${log.logged_date}T${log.logged_time}`);
-            return (loggedAt >= tMinus3 && loggedAt <= tPlus3) || (loggedAt >= sixHoursAgo);
+            return (loggedAt >= tMinus3 && loggedAt <= tPlus3);
           });
           return true;
         }
@@ -182,6 +181,9 @@ export default function Main() {
     },
   });
 
+  const { auth } = useAuth();
+  const userName = auth.user?.name?.split(' ')[0] || auth.user?.email?.split('@')[0] || "User";
+
   return (
     <div className="max-w-6xl mx-auto px-4 py-12">
       {/* Header / Search Area */}
@@ -190,7 +192,7 @@ export default function Main() {
           <div>
             <h2 className="text-3xl font-bold text-slate-900 tracking-tight flex items-center gap-3">
               <MedicationIcon sx={{ fontSize: 32 }} className="text-blue-600" />
-              Patient Dashboard
+              {userName}'s Dashboard
             </h2>
             <p className="text-slate-500 font-medium mt-1">Manage your daily medication and health schedule.</p>
           </div>

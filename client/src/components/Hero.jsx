@@ -2,7 +2,7 @@ import { useAuth } from "../auth/AuthProvider";
 
 export default function Hero() {
   const { auth } = useAuth();
-  const userName = auth.user?.email?.split('@')[0] || "User";
+  const userName = auth.user?.name || auth.user?.email?.split('@')[0] || "User";
 
   return (
     <div className="bg-white border-b border-slate-100">

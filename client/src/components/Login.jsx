@@ -12,6 +12,8 @@ export default function Login() {
   const navigate = useNavigate();
   const [email, set_email] = useState("");
   const [password, set_password] = useState("");
+  const [fullName, setFullName] = useState("");
+  const [isSignup, setIsSignup] = useState(false);
 
   const [password_error, set_password_error] = useState(false);
   const [invalid_email_pass, set_invalid_email_pass] = useState(false);
@@ -23,7 +25,7 @@ export default function Login() {
 
   async function signup(e) {
     e.preventDefault();
-    if (password.length === 0 || email.length === 0) {
+    if (password.length === 0 || email.length === 0 || (isSignup && fullName.length === 0)) {
       set_invalid_email_pass(true);
       setTimeout(() => {
         set_invalid_email_pass(false);
@@ -41,6 +43,7 @@ export default function Login() {
           {
             sending_email: email,
             sending_password: password,
+            sending_name: fullName
           },
           { withCredentials: true }
         );
@@ -109,23 +112,39 @@ export default function Login() {
     <div className="min-h-screen w-full flex bg-black text-white">
       {/* LEFT: Login */}
       <div className="w-full md:w-1/2 flex flex-col justify-center px-6 sm:px-12 lg:px-20">
-        <h1 className="text-4xl sm:text-5xl font-bold mb-4">MedClick</h1>
+        <h1 className="text-4xl sm:text-5xl font-bold mb-4 tracking-tighter">MedClick</h1>
 
         <p className="text-gray-400 mb-8 max-w-md">
-          Smarter medicine tracking, simplified.
+          Smarter medicine tracking, simplified for your health.
         </p>
-        <form onSubmit={signup}>
+        <form onSubmit={isSignup ? signup : loginform}>
           {/* Login Card */}
-          <div className="bg-white/10 backdrop-blur-md p-6 rounded-xl max-w-md">
+          <div className="bg-white/10 backdrop-blur-md p-8 rounded-2xl max-w-md border border-white/5 shadow-2xl">
+            <h2 className="text-2xl font-bold mb-6 text-blue-500">
+              {isSignup ? "Create Account" : "Welcome Back"}
+            </h2>
+
+            {isSignup && (
+              <input
+                type="text"
+                placeholder="Full Name"
+                value={fullName}
+                onChange={(e) => setFullName(e.target.value)}
+                className="w-full mb-4 px-4 py-3 rounded-md bg-black/40 border border-white/10 focus:outline-none focus:border-blue-500 transition-all"
+                required
+              />
+            )}
+
             <input
               type="email"
-              placeholder="Email"
+              placeholder="Email Address"
               value={email}
               name="username"
               onChange={(e) => {
                 set_email(e.target.value);
               }}
-              className="w-full mb-4 px-4 py-3 rounded-md bg-black/40 border border-white/10 focus:outline-none focus:border-blue-500"
+              className="w-full mb-4 px-4 py-3 rounded-md bg-black/40 border border-white/10 focus:outline-none focus:border-blue-500 transition-all"
+              required
             />
 
             <input
@@ -136,7 +155,8 @@ export default function Login() {
               onChange={(e) => {
                 set_password(e.target.value);
               }}
-              className="w-full mb-6 px-4 py-3 rounded-md bg-black/40 border border-white/10 focus:outline-none focus:border-blue-500"
+              className="w-full mb-6 px-4 py-3 rounded-md bg-black/40 border border-white/10 focus:outline-none focus:border-blue-500 transition-all"
+              required
             />
             {password_error && (
               <h1 className="text-red-500 mb-5">Too short password!</h1>
@@ -157,42 +177,48 @@ export default function Login() {
 
             {/* Buttons */}
             <div className="flex flex-col gap-4">
-              {/* Primary */}
+              <button
+                type="submit"
+                disabled={isLoading}
+                className="w-full py-4 bg-blue-600 rounded-xl hover:bg-blue-700 transition-all font-bold flex items-center justify-center gap-2 shadow-lg shadow-blue-900/20 active:scale-95"
+              >
+                {isLoading ? (
+                  <LoadingSpinner size="h-5 w-5" color="border-white" />
+                ) : isSignup ? (
+                  "Create Account"
+                ) : (
+                  "Login"
+                )}
+              </button>
+
+              <div className="flex items-center gap-4 py-2">
+                <div className="h-px bg-white/10 flex-1"></div>
+                <span className="text-gray-500 text-sm">OR</span>
+                <div className="h-px bg-white/10 flex-1"></div>
+              </div>
 
               <button
                 type="button"
-                onClick={loginform}
-                disabled={isLoading}
-                className="w-full py-3 bg-blue-600 rounded-md hover:bg-blue-700 transition font-medium flex items-center justify-center gap-2"
+                className="w-full py-4 bg-white text-black rounded-xl hover:bg-gray-200 transition-all flex items-center justify-center gap-3 font-bold active:scale-95 shadow-lg"
+                onClick={() => {
+                  window.location.href =
+                    "https://medclick-5sc0.onrender.com/auth/google";
+                }}
               >
-                {isLoading ? <LoadingSpinner size="h-5 w-5" color="border-white" /> : "Login"}
+                <GoogleIcon />
+                <span>Continue with Google</span>
               </button>
 
-              {/* Secondary actions */}
-              <h1>Don’t have an account yet?</h1>
-              <div className="flex gap-3">
-                <button
-                  type="submit"
-                  disabled={isLoading}
-                  className="w-1/2 py-3 bg-white/10 border border-white/20 rounded-md hover:bg-white/20 transition flex items-center justify-center gap-2"
-                >
-                  {isLoading ? <LoadingSpinner size="h-5 w-5" color="border-white" /> : "Sign in"}
-                </button>
-
-
+              <p className="text-center text-gray-400 mt-4">
+                {isSignup ? "Already have an account?" : "Don't have an account?"}{" "}
                 <button
                   type="button"
-                  className="w-1/2 py-3 bg-white text-black rounded-md hover:bg-gray-200 transition flex items-center justify-center gap-2"
-                  onClick={() => {
-                    window.location.href = "https://medclick-5sc0.onrender.com/auth/google"; //oauth must do a full page redirect to work + cookies and sessions work properly. u can also use an anchor tag
-                   }}
+                  onClick={() => setIsSignup(!isSignup)}
+                  className="text-blue-500 font-bold hover:underline"
                 >
-                  <GoogleIcon />
-                  <span className="text-sm font-medium">
-                    Sign in with Google
-                  </span>
+                  {isSignup ? "Login here" : "Sign up here"}
                 </button>
-              </div>
+              </p>
             </div>
           </div>
         </form>

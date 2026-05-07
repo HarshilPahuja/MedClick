@@ -117,6 +117,7 @@ app.post("/storemeds", async (req, res) => {
       times_per_day: to_store_obj.final_timesperday,
       med_time: to_store_obj.final_times,
       days: to_store_obj.final_days,
+      end_date: to_store_obj.final_enddate || null,
     },
   ]);
 
@@ -127,23 +128,41 @@ app.post("/storemeds", async (req, res) => {
   }
 });
 
+// Helper for India Time (+5:30)
+function getLocalTime() {
+  const now = new Date();
+  const offset = 5.5 * 60 * 60 * 1000; // 5.5 hours in ms
+  const indiaTime = new Date(now.getTime() + offset);
+  
+  const yyyy = indiaTime.getUTCFullYear();
+  const mm = String(indiaTime.getUTCMonth() + 1).padStart(2, '0');
+  const dd = String(indiaTime.getUTCDate()).padStart(2, '0');
+  const todayDate = `${yyyy}-${mm}-${dd}`;
+  
+  // Day names for the cron/schedule
+  const dayNames = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+  const todayName = dayNames[indiaTime.getUTCDay()];
+  
+  return { indiaTime, todayDate, todayName };
+}
+
 app.get("/getmeds", async (req, res) => {
   if (!req.isAuthenticated()) {
     return res.json({ success: false, message: "not authenticated" });
   }
 
+  const { todayDate, todayName, indiaTime } = getLocalTime();
+
   const { data: medicines, error } = await supabase
     .from("medicines")
     .select("*")
-    .eq("email", req.user.email);
+    .eq("email", req.user.email)
+    .or(`end_date.is.null,end_date.gte.${todayDate}`);
 
   if (error) return res.json({ success: false, message: "database error" });
 
-  const now = new Date();
-  const todayName = req.query.day || now.toLocaleDateString("en-US", { weekday: "long" });
-
-  // Fetch all logs from the last 24 hours for safety and persistence
-  const yesterday = new Date(now.getTime() - 48 * 60 * 60 * 1000); // 48h for extra safety
+  // Fetch all logs from the last 48 hours for safety and persistence
+  const yesterday = new Date(indiaTime.getTime() - 48 * 60 * 60 * 1000); 
   const { data: logs } = await supabase
     .from("reminder")
     .select("med_name, logged_date, logged_time")
@@ -178,10 +197,13 @@ app.get("/allmeds", async (req, res) => {
     return res.status(401).json({ success: false, message: "Not authenticated" });
   }
 
+  const { todayDate } = getLocalTime();
+
   const { data, error } = await supabase
     .from("medicines")
     .select("*")
-    .eq("email", req.user.email);
+    .eq("email", req.user.email)
+    .or(`end_date.is.null,end_date.gte.${todayDate}`);
 
   if (error) {
     return res.status(500).json({ success: false, message: "Database error" });
@@ -219,21 +241,25 @@ app.post("/medtaken", async (req, res) => {
 
   const { dawaikanaam, localDate, localTime } = req.body;
   const useremail = req.user.email;
-  const now = new Date();
+  const { indiaTime, todayDate } = getLocalTime();
 
-  // Use client-provided local time OR fallback to server local time
-  const dateToStore = localDate || now.toLocaleDateString('en-CA');
-  const timeToStore = localTime || now.toTimeString().slice(0, 8);
+  // Use client-provided local time OR fallback to adjusted indiaTime
+  const dateToStore = localDate || todayDate;
+  
+  const hh = String(indiaTime.getUTCHours()).padStart(2, '0');
+  const min = String(indiaTime.getUTCMinutes()).padStart(2, '0');
+  const ss = String(indiaTime.getUTCSeconds()).padStart(2, '0');
+  const timeToStore = localTime || `${hh}:${min}:${ss}`;
 
-  // 6-hour safety check using a robust timestamp
-  const sixHoursAgo = new Date(now.getTime() - 6 * 60 * 60 * 1000);
+  // 6-hour safety check using the adjusted time
+  const sixHoursAgo = new Date(indiaTime.getTime() - 6 * 60 * 60 * 1000);
 
   const { data: recentLogs } = await supabase
     .from("reminder")
     .select("*")
     .eq("email", useremail)
     .eq("med_name", dawaikanaam)
-    .gte("logged_date", new Date(now.getTime() - 48 * 60 * 60 * 1000).toLocaleDateString('en-CA'));
+    .gte("logged_date", new Date(indiaTime.getTime() - 48 * 60 * 60 * 1000).toLocaleDateString('en-CA'));
 
   if (recentLogs) {
     const isTooSoon = recentLogs.some(log => {
@@ -275,9 +301,34 @@ app.post("/store-fcm-token", async (req, res) => {
   const { token } = req.body;
   const email = req.user.email;
 
+  if (!token) return res.json({ success: false, message: "Invalid token" });
+
+  // Fetch existing tokens
+  const { data: userData } = await supabase
+    .from("authentication")
+    .select("fcm_token")
+    .eq("email", email)
+    .single();
+
+  let tokens = [];
+  try {
+    if (userData?.fcm_token) {
+      const parsed = JSON.parse(userData.fcm_token);
+      tokens = Array.isArray(parsed) ? parsed : [userData.fcm_token];
+    }
+  } catch (e) {
+    tokens = userData?.fcm_token ? [userData.fcm_token] : [];
+  }
+
+  // Filter out any nulls or empties and add new one
+  tokens = tokens.filter(t => t && typeof t === 'string');
+  if (!tokens.includes(token)) {
+    tokens.push(token);
+  }
+
   await supabase
     .from("authentication")
-    .update({ fcm_token: token })
+    .update({ fcm_token: JSON.stringify(tokens) })
     .eq("email", email);
 
   res.json({ success: true });
@@ -307,6 +358,7 @@ app.post("/updatemed", async (req, res) => {
       times_per_day: filledmed.final_timesperday,
       med_time: filledmed.final_times,
       days: filledmed.final_days,
+      end_date: filledmed.final_enddate || null,
     })
     .eq("email", email)
     .eq("med_name", filledmed.final_name);
@@ -322,8 +374,9 @@ app.post("/updatemed", async (req, res) => {
 
 app.post("/signin", async (req, res) => {
   try {
+    const { sending_email, sending_password, sending_name } = req.body;
     bcrypt.hash(
-      req.body.sending_password,
+      sending_password,
       saltRounds,
       async (err, encrypted_password) => {
         if (err) {
@@ -334,11 +387,12 @@ app.post("/signin", async (req, res) => {
           .from("authentication")
           .insert([
             {
-              email: req.body.sending_email,
+              email: sending_email,
               password: encrypted_password,
+              name: sending_name,
             },
           ])
-          .select("email, password")
+          .select("email, name")
           .single();
 
         if (error) {
@@ -410,9 +464,10 @@ passport.use(
               {
                 email: profile.email,
                 password: "google",
+                name: profile.displayName,
               },
             ])
-            .select("email")
+            .select("email, name")
             .single();
 
           if (error) return cb(error);

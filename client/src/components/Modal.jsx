@@ -13,11 +13,13 @@ export default function Modal({ closemodalfromchild, medname, initialData = null
   const [dosage, set_dosage] = useState("");
   const [instructions, set_instructions] = useState("");
   const [time, set_time] = useState(["09:00"]);
+  const [endDate, setEndDate] = useState("");
 
   useEffect(() => {
     if (initialData) {
       set_dosage(initialData.dosage || "");
       set_instructions(initialData.instructions || "");
+      setEndDate(initialData.end_date || "");
       
       const tpd = initialData.times_per_day;
       const tpdArr = [false, false, false, false];
@@ -66,6 +68,7 @@ export default function Modal({ closemodalfromchild, medname, initialData = null
       final_timesperday: times_per_day_button_array,
       final_times: time,
       final_days: selected_days,
+      final_enddate: endDate,
       isUpdate: !!initialData
     };
     closemodalfromchild(finalobject);
@@ -135,6 +138,17 @@ export default function Modal({ closemodalfromchild, medname, initialData = null
                 className="w-full bg-white border border-slate-200 rounded-xl px-4 py-3 text-slate-900 text-sm focus:outline-none focus:ring-4 focus:ring-blue-100 focus:border-blue-500 transition-all placeholder:text-slate-400"
               />
             </div>
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-[11px] font-bold text-slate-600 uppercase tracking-wider ml-1">End Date (Optional)</label>
+            <input 
+              type="date" 
+              value={endDate} 
+              onChange={(e) => setEndDate(e.target.value)}
+              className="w-full bg-white border border-slate-200 rounded-xl px-4 py-3 text-slate-900 text-sm focus:outline-none focus:ring-4 focus:ring-blue-100 focus:border-blue-500 transition-all"
+            />
+            <p className="text-[10px] text-slate-400 ml-1">Leave empty if you need to take this indefinitely.</p>
           </div>
 
           {/* Times Per Day */}

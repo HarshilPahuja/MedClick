@@ -25,23 +25,43 @@ function buildDate(today, timeStr) {
 
 // runs every 5 minutes
 cron.schedule("*/5 * * * *", async () => {
-  console.log("🔄 cron running");
+  const nowRaw = new Date();
+  const offset = 5.5 * 60 * 60 * 1000;
+  const indiaTime = new Date(nowRaw.getTime() + offset);
+  
+  const yyyy = indiaTime.getUTCFullYear();
+  const mm = String(indiaTime.getUTCMonth() + 1).padStart(2, '0');
+  const dd = String(indiaTime.getUTCDate()).padStart(2, '0');
+  const today = `${yyyy}-${mm}-${dd}`;
+  
+  const dayNames = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+  const todayName = dayNames[indiaTime.getUTCDay()];
 
-  const now = new Date();
-  const today = now.toISOString().split("T")[0];
-  const todayName = now.toLocaleDateString("en-US", { weekday: "long" });
+  console.log(`\n--- 🔄 Cron Started (India Time): ${yyyy}-${mm}-${dd} ${String(indiaTime.getUTCHours()).padStart(2, '0')}:${String(indiaTime.getUTCMinutes()).padStart(2, '0')} ---`);
 
   const { data: medicines, error } = await supabase
     .from("medicines")
     .select("*");
 
   if (error) {
-    console.error("Error fetching medicines:", error);
+    console.error("❌ Supabase Error:", error);
     return;
   }
 
+  console.log(`Checking ${medicines?.length || 0} medicines...`);
+
   for (const med of medicines) {
-    const { email, med_name, med_time, days } = med;
+    const { email, med_name, med_time, days, end_date } = med;
+
+    // Check if med has expired
+    if (end_date) {
+      const expiry = new Date(end_date);
+      expiry.setHours(23, 59, 59, 999);
+      if (indiaTime > expiry) {
+        console.log(`⏭️ Expired: ${med_name} (${email})`);
+        continue;
+      }
+    }
 
     if (!days.includes(todayName)) continue;
 
@@ -50,14 +70,10 @@ cron.schedule("*/5 * * * *", async () => {
       const tMinus2 = new Date(t.getTime() - 2 * 60 * 60 * 1000);
       const tPlus3  = new Date(t.getTime() + 3 * 60 * 60 * 1000);
 
-      // ignore past missed
-      if (now > tPlus3) continue;
+      if (indiaTime > tPlus3) continue; // Past window
+      if (indiaTime < t) continue;      // Not time yet
 
-      //  not due yet
-      if (now < t) continue;
-
-      //  now is in DUE window [t , t+3h]
-
+      // Check if already taken
       const { data: logs, error: logError } = await supabase
         .from("reminder")
         .select("logged_time")
@@ -66,7 +82,7 @@ cron.schedule("*/5 * * * *", async () => {
         .eq("logged_date", today);
 
       if (logError) {
-        console.error("Error checking reminder log:", logError);
+        console.error(`❌ Log Error for ${med_name}:`, logError);
         continue;
       }
 
@@ -75,30 +91,47 @@ cron.schedule("*/5 * * * *", async () => {
         return loggedAt >= tMinus2 && loggedAt <= tPlus3;
       });
 
-      // If taken → stop notifying
-      if (taken) continue;
+      if (taken) {
+        console.log(`✅ Already Taken: ${med_name} at ${time} (${email})`);
+        continue;
+      }
 
-      // fetch FCM token
+      // Fetch FCM tokens
       const { data: user } = await supabase
         .from("authentication")
         .select("fcm_token")
         .eq("email", email)
         .single();
 
-      if (!user?.fcm_token) continue;
+      if (!user?.fcm_token) {
+        console.log(`⚠️ No Token: ${email}`);
+        continue;
+      }
 
-      // 🔔DUE NOTIFICATION (EVERY CRON RUN)
-      await admin.messaging().send({
-        token: user.fcm_token,
-        notification: {
-          title: "Medicine Due 💊",
-          body: `Please take ${med_name} scheduled at ${time}`,
-        },
-      });
+      let tokens = [];
+      try {
+        const parsed = JSON.parse(user.fcm_token);
+        tokens = Array.isArray(parsed) ? parsed : [user.fcm_token];
+      } catch (e) {
+        tokens = [user.fcm_token];
+      }
 
-      console.log(
-        `🔔 DUE → ${email} | ${med_name} | ${time}`
-      );
+      if (tokens.length === 0) continue;
+
+      // 🔔 SEND NOTIFICATION
+      try {
+        const response = await admin.messaging().sendEachForMulticast({
+          tokens: tokens,
+          notification: {
+            title: "Medicine Due 💊",
+            body: `Please take ${med_name} scheduled at ${time}`,
+          },
+        });
+        console.log(`🔔 Notified ${email} (${response.successCount} devices) for ${med_name}`);
+      } catch (fcmError) {
+        console.error(`❌ FCM Error for ${email}:`, fcmError.message);
+      }
     }
   }
+  console.log("--- ✅ Cron Finished ---\n");
 });

@@ -16,7 +16,7 @@ export default function AuthProvider({ children }) {
       .get("https://medclick-5sc0.onrender.com/me", { withCredentials: true })
       .then((res) => {
         if (res.data.authenticated) {
-          setAuth({ token: true, loading: false });
+          setAuth({ token: true, user: res.data.user, loading: false });
         } else {
           setAuth({ token: false, loading: false });
         }
@@ -30,7 +30,12 @@ useEffect(() => {
   if (!auth.token) return;
 
   const setupFCM = async () => {
-    let token=await getFCMToken();
+    let token = await getFCMToken();
+    if (!token) {
+      console.log("No FCM token generated (possibly blocked by browser)");
+      listenForMessages();
+      return;
+    }
 
     await axios.post(
       "https://medclick-5sc0.onrender.com/store-fcm-token",
