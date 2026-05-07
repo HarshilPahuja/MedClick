@@ -137,73 +137,73 @@ export default function Main() {
   });
 
   return (
-    <div className="max-w-6xl mx-auto px-4 py-8 text-white">
+    <div className="max-w-6xl mx-auto px-4 py-12">
       {/* Header / Search Area */}
-      <div className="mb-12 text-center relative">
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-64 h-64 bg-blue-500/20 rounded-full blur-[100px] -z-10" />
+      <div className="mb-12">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-8">
+          <div>
+            <h2 className="text-3xl font-bold text-slate-900 tracking-tight flex items-center gap-3">
+              <MedicationIcon sx={{ fontSize: 32 }} className="text-blue-600" />
+              Patient Dashboard
+            </h2>
+            <p className="text-slate-500 font-medium mt-1">Manage your daily medication and health schedule.</p>
+          </div>
+          
+          <div className="flex bg-slate-200/50 p-1 rounded-xl w-fit border border-slate-200">
+            <Tabs 
+              value={tabValue} 
+              onChange={(e, v) => setTabValue(v)}
+              sx={{
+                minHeight: '40px',
+                '& .MuiTabs-indicator': { 
+                  height: '100%', 
+                  borderRadius: '8px',
+                  backgroundColor: '#ffffff',
+                  boxShadow: '0 1px 3px 0 rgb(0 0 0 / 0.1)',
+                  zIndex: 0
+                },
+                '& .MuiTab-root': { 
+                  color: '#64748b', 
+                  transition: 'all 0.2s',
+                  minHeight: '40px',
+                  padding: '0 20px',
+                  borderRadius: '8px',
+                  fontWeight: '600',
+                  zIndex: 1,
+                  textTransform: 'none',
+                  fontSize: '0.875rem'
+                },
+                '& .Mui-selected': { color: '#0f172a !important' }
+              }}
+            >
+              <Tab icon={<TodayIcon sx={{ fontSize: 18 }} />} iconPosition="start" label="Due Today" />
+              <Tab icon={<InventoryIcon sx={{ fontSize: 18 }} />} iconPosition="start" label="My Cabinet" />
+            </Tabs>
+          </div>
+        </div>
         
-        <h2 className="text-4xl font-black mb-8 flex items-center justify-center gap-3 tracking-tight">
-          <MedicationIcon sx={{ fontSize: 40 }} className="text-blue-400 animate-pulse" />
-          DASH<span className="text-blue-500">BOARD</span>
-        </h2>
-        
-        <form onSubmit={addmedicine} className="relative max-w-2xl mx-auto group">
-          <div className="absolute -inset-1 bg-gradient-to-r from-blue-600 to-purple-600 rounded-2xl blur opacity-25 group-hover:opacity-50 transition duration-1000 group-hover:duration-200" />
+        <form onSubmit={addmedicine} className="relative max-w-3xl">
           <input
             onChange={(e) => changeinput(e.target.value)}
             value={inputmed}
-            className="relative w-full bg-black/40 backdrop-blur-xl border border-white/10 rounded-2xl px-6 py-5 text-lg focus:outline-none focus:border-blue-500/50 transition-all shadow-2xl placeholder:text-gray-500"
-            placeholder="Search or add a new medicine..."
+            className="w-full bg-white border border-slate-300 rounded-xl px-6 py-4 text-slate-900 text-lg focus:outline-none focus:ring-4 focus:ring-blue-100 focus:border-blue-500 transition-all shadow-sm placeholder:text-slate-400"
+            placeholder="Search or add a new medication..."
           />
           <button 
             type="submit"
-            className="absolute right-2 top-2 bottom-2 bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-500 hover:to-blue-400 text-white px-8 rounded-xl transition-all flex items-center gap-2 shadow-lg shadow-blue-500/20 font-bold active:scale-95"
+            className="absolute right-2 top-2 bottom-2 bg-blue-600 hover:bg-blue-700 text-white px-6 rounded-lg transition-all flex items-center gap-2 font-bold shadow-sm active:scale-95"
           >
             <AddIcon />
-            <span className="hidden sm:inline">Add</span>
+            <span className="hidden sm:inline">Add Medication</span>
           </button>
         </form>
-      </div>
-
-      {/* Tabs Section */}
-      <div className="flex justify-center mb-10">
-        <div className="bg-white/5 backdrop-blur-2xl rounded-2xl p-1.5 border border-white/10 shadow-2xl">
-          <Tabs 
-            value={tabValue} 
-            onChange={(e, v) => setTabValue(v)}
-            sx={{
-              minHeight: '48px',
-              '& .MuiTabs-indicator': { 
-                height: '100%', 
-                borderRadius: '12px',
-                backgroundColor: 'rgba(59, 130, 246, 0.15)',
-                border: '1px solid rgba(59, 130, 246, 0.3)'
-              },
-              '& .MuiTab-root': { 
-                color: '#94a3b8', 
-                transition: 'all 0.3s',
-                minHeight: '48px',
-                padding: '0 24px',
-                borderRadius: '12px',
-                fontWeight: 'bold',
-                zIndex: 1,
-                textTransform: 'none',
-                fontSize: '0.95rem'
-              },
-              '& .Mui-selected': { color: '#60a5fa !important' }
-            }}
-          >
-            <Tab icon={<TodayIcon sx={{ fontSize: 20 }} />} iconPosition="start" label="Due Today" />
-            <Tab icon={<InventoryIcon sx={{ fontSize: 20 }} />} iconPosition="start" label="Cabinet" />
-          </Tabs>
-        </div>
       </div>
 
       {/* Content Area */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {tabValue === 0 ? (
           loadingDue ? (
-            <div className="col-span-full text-center py-20 text-gray-400">Loading your schedule...</div>
+            <div className="col-span-full text-center py-24 text-slate-400 font-medium">Loading your schedule...</div>
           ) : dueMeds.length > 0 ? (
             dueMeds.map((med, index) => (
               <Card 
@@ -214,13 +214,17 @@ export default function Main() {
               />
             ))
           ) : (
-            <div className="col-span-full text-center py-20 bg-white/5 rounded-3xl border border-dashed border-white/10">
-              <p className="text-gray-400">No medicines due right now. Relax! 🌿</p>
+            <div className="col-span-full text-center py-24 bg-white rounded-2xl border-2 border-dashed border-slate-200">
+              <div className="bg-slate-50 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+                <MedicationIcon className="text-slate-300" sx={{ fontSize: 32 }} />
+              </div>
+              <h3 className="text-slate-900 font-bold text-lg">No medications due</h3>
+              <p className="text-slate-500 mt-1">You're all caught up for today. Great job!</p>
             </div>
           )
         ) : (
           loadingAll ? (
-            <div className="col-span-full text-center py-20 text-gray-400">Opening your cabinet...</div>
+            <div className="col-span-full text-center py-24 text-slate-400 font-medium">Accessing medical records...</div>
           ) : allMeds.length > 0 ? (
             allMeds.map((med, index) => (
               <Card 
@@ -232,8 +236,12 @@ export default function Main() {
               />
             ))
           ) : (
-            <div className="col-span-full text-center py-20 bg-white/5 rounded-3xl border border-dashed border-white/10">
-              <p className="text-gray-400">Your cabinet is empty. Add some medicines above!</p>
+            <div className="col-span-full text-center py-24 bg-white rounded-2xl border-2 border-dashed border-slate-200">
+              <div className="bg-slate-50 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+                <InventoryIcon className="text-slate-300" sx={{ fontSize: 32 }} />
+              </div>
+              <h3 className="text-slate-900 font-bold text-lg">Cabinet is empty</h3>
+              <p className="text-slate-500 mt-1">Add your first medication using the search bar above.</p>
             </div>
           )
         )}
@@ -258,7 +266,7 @@ export default function Main() {
           onClose={() => setToast({ ...toast, open: false })} 
           severity={toast.severity} 
           variant="filled"
-          sx={{ width: '100%', borderRadius: '12px' }}
+          sx={{ width: '100%', borderRadius: '12px', fontWeight: '600' }}
         >
           {toast.message}
         </Alert>
