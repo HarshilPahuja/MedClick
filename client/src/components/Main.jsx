@@ -135,8 +135,35 @@ export default function Main() {
   const { isPending: loadingDue, data: dueMeds = [] } = useQuery({
     queryKey: ["due-medicines"],
     queryFn: async () => {
-      const res = await axios.get("https://medclick-5sc0.onrender.com/getmeds", { withCredentials: true });
-      return res.data;
+      const day = new Date().toLocaleDateString("en-US", { weekday: "long" });
+      const res = await axios.get(`https://medclick-5sc0.onrender.com/getmeds?day=${day}`, { withCredentials: true });
+      
+      const now = new Date();
+      const sixHoursAgo = new Date(now.getTime() - 6 * 60 * 60 * 1000);
+      const nowPlus2 = new Date(now.getTime() + 2 * 60 * 60 * 1000);
+
+      // Filter and transform meds based on local time
+      return res.data.filter(med => {
+        const [hh, mm] = med.med_time.split(":").map(Number);
+        const t = new Date(now);
+        t.setHours(hh, mm, 0, 0);
+
+        const tPlus3 = new Date(t.getTime() + 3 * 60 * 60 * 1000);
+        
+        const isDue = now >= t && now <= tPlus3;
+        const isUpcoming = now < t && t <= nowPlus2;
+
+        if (isDue || isUpcoming) {
+          const tMinus3 = new Date(t.getTime() - 3 * 60 * 60 * 1000);
+          
+          med.isTaken = med.logs?.some(log => {
+            const loggedAt = new Date(`${log.logged_date}T${log.logged_time}`);
+            return (loggedAt >= tMinus3 && loggedAt <= tPlus3) || (loggedAt >= sixHoursAgo);
+          });
+          return true;
+        }
+        return false;
+      });
     },
   });
 

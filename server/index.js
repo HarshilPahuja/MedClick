@@ -140,10 +140,10 @@ app.get("/getmeds", async (req, res) => {
   if (error) return res.json({ success: false, message: "database error" });
 
   const now = new Date();
-  const todayName = now.toLocaleDateString("en-US", { weekday: "long" });
+  const todayName = req.query.day || now.toLocaleDateString("en-US", { weekday: "long" });
 
   // Fetch all logs from the last 24 hours for safety and persistence
-  const yesterday = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+  const yesterday = new Date(now.getTime() - 48 * 60 * 60 * 1000); // 48h for extra safety
   const { data: logs } = await supabase
     .from("reminder")
     .select("med_name, logged_date, logged_time")
@@ -156,44 +156,17 @@ app.get("/getmeds", async (req, res) => {
     if (!med.days.includes(todayName)) continue;
 
     for (const timeStr of med.med_time) {
-      const [hh, mm] = timeStr.split(":").map(Number);
-      const t = new Date(now);
-      t.setHours(hh, mm, 0, 0);
-
-      // Windows
-      const tMinus3 = new Date(t.getTime() - 3 * 60 * 60 * 1000);
-      const tPlus3 = new Date(t.getTime() + 3 * 60 * 60 * 1000);
-      const nowPlus2 = new Date(now.getTime() + 2 * 60 * 60 * 1000);
-
-      const isDue = now >= t && now <= tPlus3;
-      const isUpcoming = now < t && t <= nowPlus2;
-
-      if (isDue || isUpcoming) {
-        // Check if taken within the 6-hour safety window relative to NOW
-        // OR within this specific dose's window [t-3, t+3]
-        const sixHoursAgo = new Date(now.getTime() - 6 * 60 * 60 * 1000);
-        
-        const isTaken = logs?.some((log) => {
-          if (log.med_name !== med.med_name) return false;
-          const loggedAt = new Date(`${log.logged_date}T${log.logged_time}`);
-          
-          // It's "taken" if it was logged within this dose's specific window
-          const withinDoseWindow = (loggedAt >= tMinus3 && loggedAt <= tPlus3);
-          // OR if it's currently blocked by the 6-hour safety rule
-          const blockedBySafety = (loggedAt >= sixHoursAgo);
-          
-          return withinDoseWindow || blockedBySafety;
-        });
-
-        result.push({
-          med_name: med.med_name,
-          dosage: med.dosage,
-          instructions: med.instructions,
-          med_time: timeStr,
-          times_per_day: med.times_per_day,
-          isTaken: !!isTaken,
-        });
-      }
+      // Send the med info and all logs for it - frontend will filter the windows
+      const medLogs = logs?.filter(l => l.med_name === med.med_name) || [];
+      
+      result.push({
+        med_name: med.med_name,
+        dosage: med.dosage,
+        instructions: med.instructions,
+        med_time: timeStr,
+        times_per_day: med.times_per_day,
+        logs: medLogs // Frontend will use these to determine isTaken locally
+      });
     }
   }
 
