@@ -73,8 +73,15 @@ export default function Main() {
 
   async function handleTakeMedicine(dawaikanaam) {
     try {
+      const now = new Date();
+      // Send exact local strings to match medicine schedule
+      const localDate = now.toLocaleDateString('en-CA'); // YYYY-MM-DD
+      const localTime = now.toTimeString().slice(0, 8); // HH:MM:SS
+
       const res = await axios.post("https://medclick-5sc0.onrender.com/medtaken", {
-        dawaikanaam
+        dawaikanaam,
+        localDate,
+        localTime
       }, { withCredentials: true });
 
       if (res.data.success) {

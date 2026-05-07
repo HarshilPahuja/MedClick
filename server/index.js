@@ -217,13 +217,13 @@ app.post("/medtaken", async (req, res) => {
     return res.status(401).json({ success: false, message: "Unauthorized" });
   }
 
-  const { dawaikanaam } = req.body;
+  const { dawaikanaam, localDate, localTime } = req.body;
   const useremail = req.user.email;
   const now = new Date();
 
-  // Unified Local-to-Server Date/Time (Avoid mixing ISO UTC with Local Time)
-  const localDate = now.toLocaleDateString('en-CA'); // YYYY-MM-DD
-  const localTime = now.toTimeString().slice(0, 8); // HH:MM:SS
+  // Use client-provided local time OR fallback to server local time
+  const dateToStore = localDate || now.toLocaleDateString('en-CA');
+  const timeToStore = localTime || now.toTimeString().slice(0, 8);
 
   // 6-hour safety check using a robust timestamp
   const sixHoursAgo = new Date(now.getTime() - 6 * 60 * 60 * 1000);
@@ -233,7 +233,7 @@ app.post("/medtaken", async (req, res) => {
     .select("*")
     .eq("email", useremail)
     .eq("med_name", dawaikanaam)
-    .gte("logged_date", new Date(now.getTime() - 24 * 60 * 60 * 1000).toLocaleDateString('en-CA'));
+    .gte("logged_date", new Date(now.getTime() - 48 * 60 * 60 * 1000).toLocaleDateString('en-CA'));
 
   if (recentLogs) {
     const isTooSoon = recentLogs.some(log => {
@@ -253,8 +253,8 @@ app.post("/medtaken", async (req, res) => {
     {
       email: useremail,
       med_name: dawaikanaam,
-      logged_date: localDate,
-      logged_time: localTime,
+      logged_date: dateToStore,
+      logged_time: timeToStore,
     },
   ]);
 
