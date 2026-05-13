@@ -20,6 +20,10 @@ const supabase = createClient(
 
 // helper
 function buildDate(today, timeStr) {
+  // If timeStr is already in HH:mm:ss format, don't add :00
+  if (timeStr.split(':').length === 3) {
+    return new Date(`${today}T${timeStr}`);
+  }
   return new Date(`${today}T${timeStr}:00`);
 }
 
